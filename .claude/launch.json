@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "expo-web",
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/theomichels/.nvm/versions/node/v24.19.0/bin:$PATH\" && npx expo start --web"
+      ],
+      "port": 8081
+    }
+  ]
+}
