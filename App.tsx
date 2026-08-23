@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import {
+  Animated,
+  Easing,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -15,7 +17,7 @@ import { useTodos } from "./src/hooks/useTodos";
 import { useSections } from "./src/hooks/useSections";
 import { useTrackingPoints } from "./src/hooks/useTrackingPoints";
 import { TodoItem } from "./src/components/TodoItem";
-import { Sidebar, AppView } from "./src/components/Sidebar";
+import { Sidebar } from "./src/components/Sidebar";
 import { TaskDetailPanel } from "./src/components/TaskDetailPanel";
 import { NewTaskForm } from "./src/components/NewTaskForm";
 import { TrackingPointCard } from "./src/components/TrackingPointCard";
@@ -23,18 +25,22 @@ import { NewTrackingPointForm } from "./src/components/NewTrackingPointForm";
 import { TrackingDetailPanel } from "./src/components/TrackingDetailPanel";
 import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
+import { Logo } from "./src/components/Logo";
 import { colors, gradient } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
 import { TRASH_SECTION_ID } from "./src/types/section";
 
+// Matches Sidebar's own width (220) + marginRight (20).
+const SIDEBAR_TOTAL_WIDTH = 240;
+
 export default function App() {
-  const [view, setView] = useState<AppView>("tasks");
   const {
     sections,
     loading: sectionsLoading,
     error: sectionsError,
     retry: retrySections,
     addSection,
+    updateSection,
   } = useSections();
   const [selectedSectionId, setSelectedSectionId] = useState<string>();
 
@@ -56,6 +62,16 @@ export default function App() {
   } = useTodos(selectedSectionId);
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const sidebarAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(sidebarAnim, {
+      toValue: sidebarVisible ? 1 : 0,
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+  }, [sidebarVisible, sidebarAnim]);
 
   const {
     points,
@@ -65,7 +81,7 @@ export default function App() {
     addPoint,
     updatePoint,
     removePoint,
-  } = useTrackingPoints();
+  } = useTrackingPoints(selectedSectionId);
   const [selectedPointId, setSelectedPointId] = useState<string>();
 
   const [actionError, setActionError] = useState<string | null>(null);
@@ -83,17 +99,14 @@ export default function App() {
     []
   );
 
-  const handleViewChange = (next: AppView) => {
-    setView(next);
-    setSelectedTodoId(undefined);
-    setSelectedPointId(undefined);
-  };
-
   const handleAddSection = (name: string) =>
     runAction(async () => {
       const section = await addSection(name);
       if (section) setSelectedSectionId(section.id);
     });
+
+  const handleRenameSection = (id: string, name: string) =>
+    runAction(() => updateSection(id, name));
 
   const handleAddTodo = (
     title: string,
@@ -146,110 +159,138 @@ export default function App() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.stage}>
-            <View style={styles.layout}>
-              {sidebarVisible && (
-                <Sidebar
-                  view={view}
-                  onViewChange={handleViewChange}
-                  sections={sections}
-                  selectedId={selectedSectionId}
-                  onSelect={(id) => {
-                    setSelectedSectionId(id);
-                    setSelectedTodoId(undefined);
-                  }}
-                  onAdd={handleAddSection}
-                />
-              )}
+            <View style={styles.pageContent}>
+              <View style={styles.topBar}>
+                <Pressable
+                  style={[styles.sidebarToggle, cursorPointer]}
+                  onPress={() => setSidebarVisible((v) => !v)}
+                  hitSlop={8}
+                >
+                  <Text style={styles.sidebarToggleIcon}>☰</Text>
+                </Pressable>
 
-              <View style={styles.content}>
-                <View style={styles.headerRow}>
-                  <Pressable
-                    style={[styles.sidebarToggle, cursorPointer]}
-                    onPress={() => setSidebarVisible((v) => !v)}
-                    hitSlop={8}
-                  >
-                    <Text style={styles.sidebarToggleIcon}>☰</Text>
-                  </Pressable>
-                  <Text style={styles.header}>
-                    {view === "tracking"
-                      ? "Points de suivi"
-                      : isTrashView
-                      ? "Supprimés"
-                      : selectedSection?.name ?? "Mes tâches"}
-                  </Text>
+                <View style={styles.brand}>
+                  <Logo size={48} />
+                  <Text style={styles.brandTitle}>Todo bem</Text>
                 </View>
 
-                {actionError && (
-                  <ErrorBanner
-                    message={actionError}
-                    onDismiss={() => setActionError(null)}
-                  />
-                )}
+                <View style={styles.topBarSpacer} />
+              </View>
 
-                {view === "tracking" ? (
-                  pointsError ? (
-                    <ErrorState message={pointsError} onRetry={retryPoints} />
-                  ) : (
-                    <FlatList
-                      data={points}
-                      keyExtractor={(item) => item.id}
-                      ListHeaderComponent={
-                        pointsLoading ? (
-                          <Text style={styles.empty}>Chargement...</Text>
-                        ) : null
-                      }
-                      renderItem={({ item }) => (
-                        <TrackingPointCard
-                          point={item}
-                          onOpen={setSelectedPointId}
-                          onRemove={handleRemovePoint}
+              <View style={styles.layout}>
+                <Animated.View
+                  style={[
+                    styles.sidebarWrapper,
+                    {
+                      width: sidebarAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, SIDEBAR_TOTAL_WIDTH],
+                      }),
+                      opacity: sidebarAnim,
+                    },
+                  ]}
+                >
+                  <Sidebar
+                    sections={sections}
+                    selectedId={selectedSectionId}
+                    onSelect={(id) => {
+                      setSelectedSectionId(id);
+                      setSelectedTodoId(undefined);
+                    }}
+                    onAdd={handleAddSection}
+                    onRename={handleRenameSection}
+                  />
+                </Animated.View>
+
+                <View style={styles.mainArea}>
+                  {actionError && (
+                    <ErrorBanner
+                      message={actionError}
+                      onDismiss={() => setActionError(null)}
+                    />
+                  )}
+
+                  <View style={styles.panelsRow}>
+                    <View style={styles.content}>
+                      <Text style={styles.header}>
+                        {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
+                      </Text>
+
+                      {sectionsError || todosError ? (
+                        <ErrorState
+                          message={sectionsError ?? todosError ?? ""}
+                          onRetry={() => {
+                            retrySections();
+                            retryTodos();
+                          }}
+                        />
+                      ) : (
+                        <>
+                          {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
+
+                          {tasksLoading ? (
+                            <Text style={styles.empty}>Chargement...</Text>
+                          ) : todos.length === 0 ? (
+                            <Text style={styles.empty}>
+                              {isTrashView
+                                ? "Aucune tâche terminée."
+                                : "Aucune tâche pour le moment."}
+                            </Text>
+                          ) : (
+                            <FlatList
+                              data={todos}
+                              keyExtractor={(item) => item.id}
+                              renderItem={({ item }) => (
+                                <TodoItem
+                                  todo={item}
+                                  onToggle={handleToggle}
+                                  onOpen={setSelectedTodoId}
+                                  onRemove={handleRemove}
+                                  onRestore={isTrashView ? handleToggle : undefined}
+                                  sectionName={
+                                    isTrashView ? sectionNameById[item.sectionId] : undefined
+                                  }
+                                />
+                              )}
+                            />
+                          )}
+                        </>
+                      )}
+                    </View>
+
+                    <View style={styles.content}>
+                      <Text style={styles.header}>Points de suivi</Text>
+
+                      {pointsError ? (
+                        <ErrorState message={pointsError} onRetry={retryPoints} />
+                      ) : isTrashView ? (
+                        <Text style={styles.empty}>
+                          Aucun point de suivi dans les éléments supprimés.
+                        </Text>
+                      ) : (
+                        <FlatList
+                          data={points}
+                          keyExtractor={(item) => item.id}
+                          ListHeaderComponent={
+                            pointsLoading ? (
+                              <Text style={styles.empty}>Chargement...</Text>
+                            ) : null
+                          }
+                          renderItem={({ item }) => (
+                            <TrackingPointCard
+                              point={item}
+                              onOpen={setSelectedPointId}
+                              onRemove={handleRemovePoint}
+                            />
+                          )}
+                          ListFooterComponent={
+                            <NewTrackingPointForm onSave={handleAddPoint} />
+                          }
                         />
                       )}
-                      ListFooterComponent={
-                        <NewTrackingPointForm onSave={handleAddPoint} />
-                      }
-                    />
-                  )
-                ) : sectionsError || todosError ? (
-                  <ErrorState
-                    message={sectionsError ?? todosError ?? ""}
-                    onRetry={() => {
-                      retrySections();
-                      retryTodos();
-                    }}
-                  />
-                ) : (
-                  <>
-                    {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
-
-                    {tasksLoading ? (
-                      <Text style={styles.empty}>Chargement...</Text>
-                    ) : todos.length === 0 ? (
-                      <Text style={styles.empty}>
-                        {isTrashView
-                          ? "Aucune tâche terminée."
-                          : "Aucune tâche pour le moment."}
-                      </Text>
-                    ) : (
-                      <FlatList
-                        data={todos}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                          <TodoItem
-                            todo={item}
-                            onToggle={handleToggle}
-                            onOpen={setSelectedTodoId}
-                            onRemove={handleRemove}
-                            onRestore={isTrashView ? handleToggle : undefined}
-                            sectionName={
-                              isTrashView ? sectionNameById[item.sectionId] : undefined
-                            }
-                          />
-                        )}
-                      />
-                    )}
-                  </>
-                )}
+                    </View>
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -303,11 +344,41 @@ const styles = StyleSheet.create({
     flex: 1,
     position: "relative",
   },
+  pageContent: {
+    flex: 1,
+    padding: 20,
+  },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  brand: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 14,
+  },
+  brandTitle: {
+    fontSize: 30,
+    fontWeight: "800",
+    color: colors.textPrimary,
+    letterSpacing: 0.2,
+  },
+  topBarSpacer: {
+    width: 36,
+  },
   layout: {
     flex: 1,
     flexDirection: "row",
-    padding: 20,
-    width: "100%",
+  },
+  mainArea: {
+    flex: 1,
+    flexDirection: "column",
+  },
+  sidebarWrapper: {
+    overflow: "hidden",
   },
   backdrop: {
     position: "absolute",
@@ -325,17 +396,16 @@ const styles = StyleSheet.create({
     width: 320,
     maxWidth: "90%",
   },
+  panelsRow: {
+    flex: 1,
+    flexDirection: "row",
+    gap: 20,
+  },
   content: {
     flex: 1,
     borderRadius: 16,
     backgroundColor: colors.panel,
     padding: 24,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
   },
   sidebarToggle: {
     width: 36,
@@ -352,8 +422,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   header: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "700",
+    marginBottom: 20,
     color: colors.textPrimary,
   },
   empty: {

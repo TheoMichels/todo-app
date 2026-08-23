@@ -14,8 +14,8 @@ export const colors = {
   danger: "#ff6b81",
   border: "rgba(255,255,255,0.12)",
   surface: "rgba(255,255,255,0.06)",
-  panel: "rgba(0,0,0,0.28)",
-  sidebar: "rgba(0,0,0,0.38)",
+  panel: "rgba(0,0,0,0.18)",
+  sidebar: "rgba(0,0,0,0.28)",
   overlayPanel: "rgba(18,12,26,0.97)",
   backdrop: "rgba(0,0,0,0.35)",
 };

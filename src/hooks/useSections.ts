@@ -37,5 +37,12 @@ export function useSections() {
     return newSection;
   }, []);
 
-  return { sections, loading, error, retry: load, addSection };
+  const updateSection = useCallback(async (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const updated = await sectionRepository.update(id, trimmed);
+    setSections((prev) => prev.map((s) => (s.id === id ? updated : s)));
+  }, []);
+
+  return { sections, loading, error, retry: load, addSection, updateSection };
 }

@@ -74,11 +74,14 @@ const styles = StyleSheet.create({
   },
   textArea: {
     flex: 1,
+    minWidth: 0,
   },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
+    flexWrap: "wrap",
     justifyContent: "space-between",
+    rowGap: 4,
     marginBottom: 6,
   },
   title: {

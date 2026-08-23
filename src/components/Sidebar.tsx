@@ -11,32 +11,20 @@ import { Section, TRASH_SECTION_ID } from "../types/section";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
-export type AppView = "tasks" | "tracking";
-
 type Props = {
-  view: AppView;
-  onViewChange: (view: AppView) => void;
   sections: Section[];
   selectedId: string | undefined;
   onSelect: (id: string) => void;
   onAdd: (name: string) => void;
+  onRename: (id: string, name: string) => void;
 };
 
-const VIEWS: { value: AppView; label: string }[] = [
-  { value: "tasks", label: "Tâches" },
-  { value: "tracking", label: "Suivi" },
-];
-
-export function Sidebar({
-  view,
-  onViewChange,
-  sections,
-  selectedId,
-  onSelect,
-  onAdd,
-}: Props) {
+export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const commitAdd = () => {
     const trimmed = draft.trim();
@@ -45,95 +33,119 @@ export function Sidebar({
     setIsAdding(false);
   };
 
+  const startEditing = (section: Section) => {
+    setEditingId(section.id);
+    setEditDraft(section.name);
+  };
+
+  const commitEdit = () => {
+    const trimmed = editDraft.trim();
+    if (editingId && trimmed) onRename(editingId, trimmed);
+    setEditingId(null);
+  };
+
   return (
     <View style={styles.sidebar}>
-      <View style={styles.viewSwitch}>
-        {VIEWS.map(({ value, label }) => {
-          const selected = view === value;
+      <Text style={styles.brand}>Mes tâches</Text>
+
+      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+        {sections.map((section) => {
+          const selected = section.id === selectedId;
+
+          if (editingId === section.id) {
+            return (
+              <TextInput
+                key={section.id}
+                style={styles.editInput}
+                value={editDraft}
+                onChangeText={setEditDraft}
+                onSubmitEditing={commitEdit}
+                onBlur={commitEdit}
+                autoFocus
+              />
+            );
+          }
+
           return (
             <Pressable
-              key={value}
-              style={[
-                styles.viewTab,
-                selected && styles.viewTabSelected,
-                cursorPointer,
-              ]}
-              onPress={() => onViewChange(value)}
+              key={section.id}
+              style={[styles.item, selected && styles.itemSelected, cursorPointer]}
+              onPress={() => onSelect(section.id)}
+              onHoverIn={() => setHoveredId(section.id)}
+              onHoverOut={() => setHoveredId((current) => (current === section.id ? null : current))}
             >
-              <Text
-                style={[styles.viewTabText, selected && styles.viewTabTextSelected]}
-              >
-                {label}
-              </Text>
+              <View style={styles.itemRow}>
+                <Text
+                  style={[styles.itemText, selected && styles.itemTextSelected]}
+                  numberOfLines={1}
+                >
+                  {section.name}
+                </Text>
+                {hoveredId === section.id && (
+                  <Pressable
+                    style={cursorPointer}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      startEditing(section);
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text
+                      style={[
+                        styles.editIcon,
+                        selected && styles.editIconSelected,
+                      ]}
+                    >
+                      ✎
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
             </Pressable>
           );
         })}
-      </View>
 
-      {view === "tasks" && (
-        <>
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            {sections.map((section) => {
-              const selected = section.id === selectedId;
-              return (
-                <Pressable
-                  key={section.id}
-                  style={[styles.item, selected && styles.itemSelected, cursorPointer]}
-                  onPress={() => onSelect(section.id)}
-                >
-                  <Text
-                    style={[styles.itemText, selected && styles.itemTextSelected]}
-                    numberOfLines={1}
-                  >
-                    {section.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+        <View style={styles.divider} />
 
-            <View style={styles.divider} />
+        <Pressable
+          style={[
+            styles.item,
+            selectedId === TRASH_SECTION_ID && styles.itemSelected,
+            cursorPointer,
+          ]}
+          onPress={() => onSelect(TRASH_SECTION_ID)}
+        >
+          <Text
+            style={[
+              styles.itemText,
+              styles.trashText,
+              selectedId === TRASH_SECTION_ID && styles.itemTextSelected,
+            ]}
+            numberOfLines={1}
+          >
+            Supprimés
+          </Text>
+        </Pressable>
+      </ScrollView>
 
-            <Pressable
-              style={[
-                styles.item,
-                selectedId === TRASH_SECTION_ID && styles.itemSelected,
-                cursorPointer,
-              ]}
-              onPress={() => onSelect(TRASH_SECTION_ID)}
-            >
-              <Text
-                style={[
-                  styles.itemText,
-                  styles.trashText,
-                  selectedId === TRASH_SECTION_ID && styles.itemTextSelected,
-                ]}
-                numberOfLines={1}
-              >
-                Supprimés
-              </Text>
-            </Pressable>
-          </ScrollView>
-
-          {isAdding ? (
-            <TextInput
-              style={styles.addInput}
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="Nom de la section"
-              placeholderTextColor={colors.textMuted}
-              onSubmitEditing={commitAdd}
-              onBlur={commitAdd}
-              autoFocus
-            />
-          ) : (
-            <Pressable
-              style={[styles.addButton, cursorPointer]}
-              onPress={() => setIsAdding(true)}
-            >
-              <Text style={styles.addButtonText}>+ Section</Text>
-            </Pressable>
-          )}
-        </>
+      {isAdding ? (
+        <TextInput
+          style={styles.addInput}
+          value={draft}
+          onChangeText={setDraft}
+          placeholder="Nom de la section"
+          placeholderTextColor={colors.textMuted}
+          onSubmitEditing={commitAdd}
+          onBlur={commitAdd}
+          autoFocus
+        />
+      ) : (
+        <Pressable
+          style={[styles.addButton, cursorPointer]}
+          onPress={() => setIsAdding(true)}
+        >
+          <Text style={styles.addButtonText}>+ Section</Text>
+        </Pressable>
       )}
     </View>
   );
@@ -141,38 +153,21 @@ export function Sidebar({
 
 const styles = StyleSheet.create({
   sidebar: {
+    flex: 1,
     width: 220,
     borderRadius: 16,
     backgroundColor: colors.sidebar,
-    padding: 20,
+    padding: 24,
     marginRight: 20,
   },
-  viewSwitch: {
-    flexDirection: "row",
-    backgroundColor: colors.surface,
-    borderRadius: 10,
-    padding: 4,
+  brand: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: colors.textPrimary,
     marginBottom: 20,
   },
-  viewTab: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  viewTabSelected: {
-    backgroundColor: colors.accent,
-  },
-  viewTabText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.textSecondary,
-  },
-  viewTabTextSelected: {
-    color: colors.textPrimary,
-  },
   list: {
-    flexGrow: 0,
+    flexGrow: 1,
     marginBottom: 12,
   },
   item: {
@@ -184,12 +179,26 @@ const styles = StyleSheet.create({
   itemSelected: {
     backgroundColor: colors.accent,
   },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
   itemText: {
+    flex: 1,
     fontSize: 15,
     fontWeight: "500",
     color: colors.textSecondary,
   },
   itemTextSelected: {
+    color: colors.textPrimary,
+  },
+  editIcon: {
+    fontSize: 14,
+    color: colors.textMuted,
+  },
+  editIconSelected: {
     color: colors.textPrimary,
   },
   divider: {
@@ -221,5 +230,15 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
     color: colors.textPrimary,
     fontSize: 14,
+  },
+  editInput: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    color: colors.textPrimary,
+    fontSize: 15,
+    marginBottom: 6,
   },
 });

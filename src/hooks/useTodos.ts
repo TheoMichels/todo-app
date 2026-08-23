@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Priority, Todo } from "../types/todo";
 import { TRASH_SECTION_ID } from "../types/section";
 import { todoRepository } from "../storage";
+import { sortTodos } from "../utils/todoSort";
 
 export function useTodos(sectionId: string | undefined) {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -67,8 +68,11 @@ export function useTodos(sectionId: string | undefined) {
   }, []);
 
   const sectionTodos = useMemo(() => {
-    if (sectionId === TRASH_SECTION_ID) return todos.filter((t) => t.done);
-    return todos.filter((t) => t.sectionId === sectionId && !t.done);
+    const filtered =
+      sectionId === TRASH_SECTION_ID
+        ? todos.filter((t) => t.done)
+        : todos.filter((t) => t.sectionId === sectionId && !t.done);
+    return sortTodos(filtered);
   }, [todos, sectionId]);
 
   return {

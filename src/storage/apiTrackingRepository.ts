@@ -5,6 +5,7 @@ import { dateFromApi, dateTimeFromApi, dateToApi } from "../api/dates";
 
 type TrackingPointDto = {
   id: string;
+  sectionId: string;
   title: string;
   status: string;
   nextStep: string;
@@ -15,6 +16,7 @@ type TrackingPointDto = {
 function fromDto(dto: TrackingPointDto): TrackingPoint {
   return {
     id: dto.id,
+    sectionId: dto.sectionId,
     title: dto.title,
     status: dto.status,
     nextStep: dto.nextStep,
@@ -33,6 +35,7 @@ export const apiTrackingRepository: TrackingRepository = {
     const dto = await apiRequest<TrackingPointDto>("/tracking-points", {
       method: "POST",
       body: {
+        sectionId: input.sectionId,
         title: input.title,
         status: input.status,
         nextStep: input.nextStep,

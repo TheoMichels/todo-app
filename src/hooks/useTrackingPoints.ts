@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TrackingPoint } from "../types/trackingPoint";
+import { TRASH_SECTION_ID } from "../types/section";
 import { trackingRepository } from "../storage";
 
 type NewTrackingPointData = {
@@ -9,7 +10,7 @@ type NewTrackingPointData = {
   nextDueDate: number | null;
 };
 
-export function useTrackingPoints() {
+export function useTrackingPoints(sectionId: string | undefined) {
   const [points, setPoints] = useState<TrackingPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,10 +32,14 @@ export function useTrackingPoints() {
     load();
   }, [load]);
 
-  const addPoint = useCallback(async (data: NewTrackingPointData) => {
-    const created = await trackingRepository.create(data);
-    setPoints((prev) => [...prev, created]);
-  }, []);
+  const addPoint = useCallback(
+    async (data: NewTrackingPointData) => {
+      if (!sectionId || sectionId === TRASH_SECTION_ID) return;
+      const created = await trackingRepository.create({ ...data, sectionId });
+      setPoints((prev) => [...prev, created]);
+    },
+    [sectionId]
+  );
 
   const updatePoint = useCallback(
     async (
@@ -52,5 +57,18 @@ export function useTrackingPoints() {
     setPoints((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
-  return { points, loading, error, retry: load, addPoint, updatePoint, removePoint };
+  const sectionPoints = useMemo(
+    () => points.filter((p) => p.sectionId === sectionId),
+    [points, sectionId]
+  );
+
+  return {
+    points: sectionPoints,
+    loading,
+    error,
+    retry: load,
+    addPoint,
+    updatePoint,
+    removePoint,
+  };
 }

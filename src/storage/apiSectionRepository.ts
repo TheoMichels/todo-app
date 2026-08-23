@@ -26,4 +26,12 @@ export const apiSectionRepository: SectionRepository = {
     });
     return fromDto(dto);
   },
+
+  async update(id, name) {
+    const dto = await apiRequest<SectionDto>(`/sections/${id}`, {
+      method: "PATCH",
+      body: { name },
+    });
+    return fromDto(dto);
+  },
 };
