@@ -13,15 +13,20 @@ import {
 } from "react-native";
 import { useTodos } from "./src/hooks/useTodos";
 import { useSections } from "./src/hooks/useSections";
+import { useTrackingPoints } from "./src/hooks/useTrackingPoints";
 import { TodoItem } from "./src/components/TodoItem";
-import { Sidebar } from "./src/components/Sidebar";
+import { Sidebar, AppView } from "./src/components/Sidebar";
 import { TaskDetailPanel } from "./src/components/TaskDetailPanel";
 import { NewTaskForm } from "./src/components/NewTaskForm";
+import { TrackingPointCard } from "./src/components/TrackingPointCard";
+import { NewTrackingPointForm } from "./src/components/NewTrackingPointForm";
+import { TrackingDetailPanel } from "./src/components/TrackingDetailPanel";
 import { colors, gradient } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
 import { TRASH_SECTION_ID } from "./src/types/section";
 
 export default function App() {
+  const [view, setView] = useState<AppView>("tasks");
   const { sections, loading: sectionsLoading, addSection } = useSections();
   const [selectedSectionId, setSelectedSectionId] = useState<string>();
 
@@ -42,6 +47,21 @@ export default function App() {
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
   const [sidebarVisible, setSidebarVisible] = useState(true);
 
+  const {
+    points,
+    loading: pointsLoading,
+    addPoint,
+    updatePoint,
+    removePoint,
+  } = useTrackingPoints();
+  const [selectedPointId, setSelectedPointId] = useState<string>();
+
+  const handleViewChange = (next: AppView) => {
+    setView(next);
+    setSelectedTodoId(undefined);
+    setSelectedPointId(undefined);
+  };
+
   const handleAddSection = (name: string) => {
     const section = addSection(name);
     if (section) setSelectedSectionId(section.id);
@@ -52,10 +72,16 @@ export default function App() {
     if (id === selectedTodoId) setSelectedTodoId(undefined);
   };
 
+  const handleRemovePoint = (id: string) => {
+    removePoint(id);
+    if (id === selectedPointId) setSelectedPointId(undefined);
+  };
+
   const loading = sectionsLoading || todosLoading;
   const isTrashView = selectedSectionId === TRASH_SECTION_ID;
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedTodo = todos.find((t) => t.id === selectedTodoId);
+  const selectedPoint = points.find((p) => p.id === selectedPointId);
   const sectionNameById = Object.fromEntries(
     sections.map((s) => [s.id, s.name])
   );
@@ -75,8 +101,10 @@ export default function App() {
         >
           <View style={styles.stage}>
             <View style={styles.layout}>
-              {!sectionsLoading && sidebarVisible && (
+              {sidebarVisible && (
                 <Sidebar
+                  view={view}
+                  onViewChange={handleViewChange}
                   sections={sections}
                   selectedId={selectedSectionId}
                   onSelect={(id) => {
@@ -97,37 +125,65 @@ export default function App() {
                     <Text style={styles.sidebarToggleIcon}>☰</Text>
                   </Pressable>
                   <Text style={styles.header}>
-                    {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
+                    {view === "tracking"
+                      ? "Points de suivi"
+                      : isTrashView
+                      ? "Supprimés"
+                      : selectedSection?.name ?? "Mes tâches"}
                   </Text>
                 </View>
 
-                {!isTrashView && <NewTaskForm onAdd={addTodo} />}
-
-                {loading ? (
-                  <Text style={styles.empty}>Chargement...</Text>
-                ) : todos.length === 0 ? (
-                  <Text style={styles.empty}>
-                    {isTrashView
-                      ? "Aucune tâche terminée."
-                      : "Aucune tâche pour le moment."}
-                  </Text>
-                ) : (
+                {view === "tracking" ? (
                   <FlatList
-                    data={todos}
+                    data={points}
                     keyExtractor={(item) => item.id}
+                    ListHeaderComponent={
+                      pointsLoading ? (
+                        <Text style={styles.empty}>Chargement...</Text>
+                      ) : null
+                    }
                     renderItem={({ item }) => (
-                      <TodoItem
-                        todo={item}
-                        onToggle={toggleTodo}
-                        onOpen={setSelectedTodoId}
-                        onRemove={handleRemove}
-                        onRestore={isTrashView ? toggleTodo : undefined}
-                        sectionName={
-                          isTrashView ? sectionNameById[item.sectionId] : undefined
-                        }
+                      <TrackingPointCard
+                        point={item}
+                        onOpen={setSelectedPointId}
+                        onRemove={handleRemovePoint}
                       />
                     )}
+                    ListFooterComponent={
+                      <NewTrackingPointForm onSave={addPoint} />
+                    }
                   />
+                ) : (
+                  <>
+                    {!isTrashView && <NewTaskForm onAdd={addTodo} />}
+
+                    {loading ? (
+                      <Text style={styles.empty}>Chargement...</Text>
+                    ) : todos.length === 0 ? (
+                      <Text style={styles.empty}>
+                        {isTrashView
+                          ? "Aucune tâche terminée."
+                          : "Aucune tâche pour le moment."}
+                      </Text>
+                    ) : (
+                      <FlatList
+                        data={todos}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <TodoItem
+                            todo={item}
+                            onToggle={toggleTodo}
+                            onOpen={setSelectedTodoId}
+                            onRemove={handleRemove}
+                            onRestore={isTrashView ? toggleTodo : undefined}
+                            sectionName={
+                              isTrashView ? sectionNameById[item.sectionId] : undefined
+                            }
+                          />
+                        )}
+                      />
+                    )}
+                  </>
                 )}
               </View>
             </View>
@@ -143,6 +199,22 @@ export default function App() {
                     todo={selectedTodo}
                     onChange={(patch) => updateTodo(selectedTodo.id, patch)}
                     onClose={() => setSelectedTodoId(undefined)}
+                  />
+                </View>
+              </>
+            )}
+
+            {selectedPoint && (
+              <>
+                <Pressable
+                  style={styles.backdrop}
+                  onPress={() => setSelectedPointId(undefined)}
+                />
+                <View style={styles.panelContainer}>
+                  <TrackingDetailPanel
+                    point={selectedPoint}
+                    onChange={(patch) => updatePoint(selectedPoint.id, patch)}
+                    onClose={() => setSelectedPointId(undefined)}
                   />
                 </View>
               </>
