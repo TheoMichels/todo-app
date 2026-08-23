@@ -10,7 +10,7 @@ type Props = {
     status: string;
     nextStep: string;
     nextDueDate: number | null;
-  }) => void;
+  }) => Promise<void>;
 };
 
 function formatDueDate(dateMs: number) {
@@ -37,10 +37,14 @@ export function NewTrackingPointForm({ onSave }: Props) {
     setIsOpen(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!title.trim()) return;
-    onSave({ title, status, nextStep, nextDueDate: dueDate });
-    reset();
+    try {
+      await onSave({ title, status, nextStep, nextDueDate: dueDate });
+      reset();
+    } catch {
+      // Surfaced by the parent's error banner; keep the form open and filled.
+    }
   };
 
   if (!isOpen) {

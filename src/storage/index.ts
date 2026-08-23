@@ -1,8 +1,7 @@
-import { localTodoRepository } from "./localTodoRepository";
-import { localSectionRepository } from "./localSectionRepository";
-import { localTrackingRepository } from "./localTrackingRepository";
+import { apiTodoRepository } from "./apiTodoRepository";
+import { apiSectionRepository } from "./apiSectionRepository";
+import { apiTrackingRepository } from "./apiTrackingRepository";
 
-// Swap these for API-backed repositories once the backend exists.
-export const todoRepository = localTodoRepository;
-export const sectionRepository = localSectionRepository;
-export const trackingRepository = localTrackingRepository;
+export const todoRepository = apiTodoRepository;
+export const sectionRepository = apiSectionRepository;
+export const trackingRepository = apiTrackingRepository;

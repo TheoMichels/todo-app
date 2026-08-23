@@ -9,7 +9,7 @@ type Props = {
   onAdd: (
     title: string,
     options: { priority: Priority; dueDate: number | null }
-  ) => void;
+  ) => Promise<void>;
 };
 
 function formatDueDate(dateMs: number) {
@@ -25,13 +25,17 @@ export function NewTaskForm({ onAdd }: Props) {
   const [dueDate, setDueDate] = useState<number | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim()) return;
-    onAdd(title, { priority: urgent ? "urgent" : "standard", dueDate });
-    setTitle("");
-    setUrgent(false);
-    setDueDate(null);
-    setShowCalendar(false);
+    try {
+      await onAdd(title, { priority: urgent ? "urgent" : "standard", dueDate });
+      setTitle("");
+      setUrgent(false);
+      setDueDate(null);
+      setShowCalendar(false);
+    } catch {
+      // Surfaced by the parent's error banner; keep the form filled so nothing is lost.
+    }
   };
 
   return (

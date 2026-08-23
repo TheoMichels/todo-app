@@ -12,58 +12,45 @@ type NewTrackingPointData = {
 export function useTrackingPoints() {
   const [points, setPoints] = useState<TrackingPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const loaded = await trackingRepository.list();
+      setPoints(loaded);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    trackingRepository.getAll().then((loaded) => {
-      setPoints(loaded);
-      setLoading(false);
-    });
-  }, []);
+    load();
+  }, [load]);
 
-  const persist = useCallback((next: TrackingPoint[]) => {
-    setPoints(next);
-    trackingRepository.save(next);
+  const addPoint = useCallback(async (data: NewTrackingPointData) => {
+    const created = await trackingRepository.create(data);
+    setPoints((prev) => [...prev, created]);
   }, []);
-
-  const addPoint = useCallback(
-    (data: NewTrackingPointData) => {
-      const title = data.title.trim();
-      if (!title) return;
-      const newPoint: TrackingPoint = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        title,
-        status: data.status.trim(),
-        nextStep: data.nextStep.trim(),
-        nextDueDate: data.nextDueDate,
-        createdAt: Date.now(),
-      };
-      persist([...points, newPoint]);
-    },
-    [points, persist]
-  );
 
   const updatePoint = useCallback(
-    (
+    async (
       id: string,
       patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep" | "nextDueDate">>
     ) => {
-      persist(
-        points.map((p) => {
-          if (p.id !== id) return p;
-          const title = patch.title !== undefined ? patch.title.trim() : p.title;
-          return { ...p, ...patch, title: title || p.title };
-        })
-      );
+      const updated = await trackingRepository.update(id, patch);
+      setPoints((prev) => prev.map((p) => (p.id === id ? updated : p)));
     },
-    [points, persist]
+    []
   );
 
-  const removePoint = useCallback(
-    (id: string) => {
-      persist(points.filter((p) => p.id !== id));
-    },
-    [points, persist]
-  );
+  const removePoint = useCallback(async (id: string) => {
+    await trackingRepository.remove(id);
+    setPoints((prev) => prev.filter((p) => p.id !== id));
+  }, []);
 
-  return { points, loading, addPoint, updatePoint, removePoint };
+  return { points, loading, error, retry: load, addPoint, updatePoint, removePoint };
 }

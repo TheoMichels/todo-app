@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -21,13 +21,21 @@ import { NewTaskForm } from "./src/components/NewTaskForm";
 import { TrackingPointCard } from "./src/components/TrackingPointCard";
 import { NewTrackingPointForm } from "./src/components/NewTrackingPointForm";
 import { TrackingDetailPanel } from "./src/components/TrackingDetailPanel";
+import { ErrorState } from "./src/components/ErrorState";
+import { ErrorBanner } from "./src/components/ErrorBanner";
 import { colors, gradient } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
 import { TRASH_SECTION_ID } from "./src/types/section";
 
 export default function App() {
   const [view, setView] = useState<AppView>("tasks");
-  const { sections, loading: sectionsLoading, addSection } = useSections();
+  const {
+    sections,
+    loading: sectionsLoading,
+    error: sectionsError,
+    retry: retrySections,
+    addSection,
+  } = useSections();
   const [selectedSectionId, setSelectedSectionId] = useState<string>();
 
   useEffect(() => {
@@ -39,6 +47,8 @@ export default function App() {
   const {
     todos,
     loading: todosLoading,
+    error: todosError,
+    retry: retryTodos,
     addTodo,
     toggleTodo,
     updateTodo,
@@ -50,11 +60,28 @@ export default function App() {
   const {
     points,
     loading: pointsLoading,
+    error: pointsError,
+    retry: retryPoints,
     addPoint,
     updatePoint,
     removePoint,
   } = useTrackingPoints();
   const [selectedPointId, setSelectedPointId] = useState<string>();
+
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const runAction = useCallback(
+    async (action: () => Promise<void>, options?: { rethrow?: boolean }) => {
+      try {
+        setActionError(null);
+        await action();
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : "Une erreur est survenue.");
+        if (options?.rethrow) throw e;
+      }
+    },
+    []
+  );
 
   const handleViewChange = (next: AppView) => {
     setView(next);
@@ -62,22 +89,41 @@ export default function App() {
     setSelectedPointId(undefined);
   };
 
-  const handleAddSection = (name: string) => {
-    const section = addSection(name);
-    if (section) setSelectedSectionId(section.id);
-  };
+  const handleAddSection = (name: string) =>
+    runAction(async () => {
+      const section = await addSection(name);
+      if (section) setSelectedSectionId(section.id);
+    });
 
-  const handleRemove = (id: string) => {
-    removeTodo(id);
-    if (id === selectedTodoId) setSelectedTodoId(undefined);
-  };
+  const handleAddTodo = (
+    title: string,
+    options: Parameters<typeof addTodo>[1]
+  ) => runAction(() => addTodo(title, options), { rethrow: true });
 
-  const handleRemovePoint = (id: string) => {
-    removePoint(id);
-    if (id === selectedPointId) setSelectedPointId(undefined);
-  };
+  const handleToggle = (id: string) => runAction(() => toggleTodo(id));
 
-  const loading = sectionsLoading || todosLoading;
+  const handleUpdateTodo = (id: string, patch: Parameters<typeof updateTodo>[1]) =>
+    runAction(() => updateTodo(id, patch));
+
+  const handleRemove = (id: string) =>
+    runAction(async () => {
+      await removeTodo(id);
+      if (id === selectedTodoId) setSelectedTodoId(undefined);
+    });
+
+  const handleAddPoint = (data: Parameters<typeof addPoint>[0]) =>
+    runAction(() => addPoint(data), { rethrow: true });
+
+  const handleUpdatePoint = (id: string, patch: Parameters<typeof updatePoint>[1]) =>
+    runAction(() => updatePoint(id, patch));
+
+  const handleRemovePoint = (id: string) =>
+    runAction(async () => {
+      await removePoint(id);
+      if (id === selectedPointId) setSelectedPointId(undefined);
+    });
+
+  const tasksLoading = sectionsLoading || todosLoading;
   const isTrashView = selectedSectionId === TRASH_SECTION_ID;
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedTodo = todos.find((t) => t.id === selectedTodoId);
@@ -133,31 +179,50 @@ export default function App() {
                   </Text>
                 </View>
 
+                {actionError && (
+                  <ErrorBanner
+                    message={actionError}
+                    onDismiss={() => setActionError(null)}
+                  />
+                )}
+
                 {view === "tracking" ? (
-                  <FlatList
-                    data={points}
-                    keyExtractor={(item) => item.id}
-                    ListHeaderComponent={
-                      pointsLoading ? (
-                        <Text style={styles.empty}>Chargement...</Text>
-                      ) : null
-                    }
-                    renderItem={({ item }) => (
-                      <TrackingPointCard
-                        point={item}
-                        onOpen={setSelectedPointId}
-                        onRemove={handleRemovePoint}
-                      />
-                    )}
-                    ListFooterComponent={
-                      <NewTrackingPointForm onSave={addPoint} />
-                    }
+                  pointsError ? (
+                    <ErrorState message={pointsError} onRetry={retryPoints} />
+                  ) : (
+                    <FlatList
+                      data={points}
+                      keyExtractor={(item) => item.id}
+                      ListHeaderComponent={
+                        pointsLoading ? (
+                          <Text style={styles.empty}>Chargement...</Text>
+                        ) : null
+                      }
+                      renderItem={({ item }) => (
+                        <TrackingPointCard
+                          point={item}
+                          onOpen={setSelectedPointId}
+                          onRemove={handleRemovePoint}
+                        />
+                      )}
+                      ListFooterComponent={
+                        <NewTrackingPointForm onSave={handleAddPoint} />
+                      }
+                    />
+                  )
+                ) : sectionsError || todosError ? (
+                  <ErrorState
+                    message={sectionsError ?? todosError ?? ""}
+                    onRetry={() => {
+                      retrySections();
+                      retryTodos();
+                    }}
                   />
                 ) : (
                   <>
-                    {!isTrashView && <NewTaskForm onAdd={addTodo} />}
+                    {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
 
-                    {loading ? (
+                    {tasksLoading ? (
                       <Text style={styles.empty}>Chargement...</Text>
                     ) : todos.length === 0 ? (
                       <Text style={styles.empty}>
@@ -172,10 +237,10 @@ export default function App() {
                         renderItem={({ item }) => (
                           <TodoItem
                             todo={item}
-                            onToggle={toggleTodo}
+                            onToggle={handleToggle}
                             onOpen={setSelectedTodoId}
                             onRemove={handleRemove}
-                            onRestore={isTrashView ? toggleTodo : undefined}
+                            onRestore={isTrashView ? handleToggle : undefined}
                             sectionName={
                               isTrashView ? sectionNameById[item.sectionId] : undefined
                             }
@@ -197,7 +262,7 @@ export default function App() {
                 <View style={styles.panelContainer}>
                   <TaskDetailPanel
                     todo={selectedTodo}
-                    onChange={(patch) => updateTodo(selectedTodo.id, patch)}
+                    onChange={(patch) => handleUpdateTodo(selectedTodo.id, patch)}
                     onClose={() => setSelectedTodoId(undefined)}
                   />
                 </View>
@@ -213,7 +278,7 @@ export default function App() {
                 <View style={styles.panelContainer}>
                   <TrackingDetailPanel
                     point={selectedPoint}
-                    onChange={(patch) => updatePoint(selectedPoint.id, patch)}
+                    onChange={(patch) => handleUpdatePoint(selectedPoint.id, patch)}
                     onClose={() => setSelectedPointId(undefined)}
                   />
                 </View>

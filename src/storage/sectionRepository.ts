@@ -1,6 +1,6 @@
 import { Section } from "../types/section";
 
 export interface SectionRepository {
-  getAll(): Promise<Section[]>;
-  save(sections: Section[]): Promise<void>;
+  list(): Promise<Section[]>;
+  create(name: string): Promise<Section>;
 }

@@ -1,0 +1,428 @@
+openapi: 3.0.3
+info:
+  title: Todo & Suivi API
+  description: >
+    API attendue si le backend de cette application (tâches organisées par
+    sections avec une vue "Supprimés", et points de suivi) était décorrélé
+    du frontend React Native / Expo. Dérivée des besoins fonctionnels
+    actuels de l'app : le frontend ne persiste aujourd'hui qu'en local
+    (AsyncStorage) via une couche `repository` isolée, conçue pour être
+    remplacée par des appels à cette API sans toucher au reste du code.
+  version: "1.0.0"
+servers:
+  - url: https://api.example.com/v1
+    description: Serveur de production (à remplacer)
+
+tags:
+  - name: Sections
+    description: Listes de tâches (ex. "Général", "Travail")
+  - name: Todos
+    description: Tâches, rattachées à une section
+  - name: TrackingPoints
+    description: Points de suivi (statut / next step / échéance)
+
+security:
+  - bearerAuth: []
+
+paths:
+  /sections:
+    get:
+      tags: [Sections]
+      summary: Lister les sections
+      responses:
+        "200":
+          description: Liste des sections
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Section"
+    post:
+      tags: [Sections]
+      summary: Créer une section
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SectionCreate"
+      responses:
+        "201":
+          description: Section créée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Section"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /todos:
+    get:
+      tags: [Todos]
+      summary: Lister les tâches
+      description: >
+        Sert à la fois l'affichage d'une section (`sectionId` +
+        `done=false`) et la vue "Supprimés" (`done=true`, toutes sections
+        confondues, aucune tâche n'étant jamais supprimée physiquement en
+        la cochant).
+      parameters:
+        - name: sectionId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filtrer par section. Omis pour la vue "Supprimés".
+        - name: done
+          in: query
+          schema:
+            type: boolean
+          description: Filtrer par statut terminé / non terminé.
+      responses:
+        "200":
+          description: Liste des tâches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Todo"
+    post:
+      tags: [Todos]
+      summary: Créer une tâche
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoCreate"
+      responses:
+        "201":
+          description: Tâche créée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Section introuvable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /todos/{todoId}:
+    parameters:
+      - name: todoId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags: [Todos]
+      summary: Modifier une tâche
+      description: >
+        Modification partielle : titre, priorité, échéance, ou statut
+        terminé. Cocher (`done: true`) retire la tâche de sa section pour
+        la faire apparaître dans "Supprimés" ; décocher (`done: false`) la
+        restaure dans sa section d'origine.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoUpdate"
+      responses:
+        "200":
+          description: Tâche mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Todos]
+      summary: Supprimer définitivement une tâche
+      description: Seule opération de suppression physique (le bouton "✕").
+      responses:
+        "204":
+          description: Tâche supprimée
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /tracking-points:
+    get:
+      tags: [TrackingPoints]
+      summary: Lister les points de suivi
+      responses:
+        "200":
+          description: Liste des points de suivi
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrackingPoint"
+    post:
+      tags: [TrackingPoints]
+      summary: Créer un point de suivi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackingPointCreate"
+      responses:
+        "201":
+          description: Point de suivi créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingPoint"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /tracking-points/{pointId}:
+    parameters:
+      - name: pointId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    patch:
+      tags: [TrackingPoints]
+      summary: Modifier un point de suivi
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackingPointUpdate"
+      responses:
+        "200":
+          description: Point de suivi mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingPoint"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [TrackingPoints]
+      summary: Supprimer un point de suivi
+      responses:
+        "204":
+          description: Point de suivi supprimé
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Nécessaire dès que le backend sert plusieurs appareils/comptes —
+        l'objectif initial du projet étant d'accéder à l'app depuis
+        plusieurs appareils. Absent du frontend actuel, qui persiste tout
+        en local (AsyncStorage) sans notion de compte.
+
+  responses:
+    BadRequest:
+      description: Requête invalide
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Ressource introuvable
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+      example:
+        message: "Section introuvable"
+
+    Section:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, createdAt]
+      example:
+        id: "a1b2c3d4-0000-0000-0000-000000000001"
+        name: "Travail"
+        createdAt: "2026-08-22T11:37:00Z"
+
+    SectionCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+      required: [name]
+      example:
+        name: "Travail"
+
+    Priority:
+      type: string
+      enum: [standard, urgent]
+      default: standard
+
+    Todo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sectionId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        done:
+          type: boolean
+        priority:
+          $ref: "#/components/schemas/Priority"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, sectionId, title, done, priority, dueDate, createdAt]
+      example:
+        id: "b1b2c3d4-0000-0000-0000-000000000002"
+        sectionId: "a1b2c3d4-0000-0000-0000-000000000001"
+        title: "Préparer la réunion avec Paul"
+        done: false
+        priority: urgent
+        dueDate: "2026-08-24"
+        createdAt: "2026-08-23T09:12:00Z"
+
+    TodoCreate:
+      type: object
+      properties:
+        sectionId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+        priority:
+          $ref: "#/components/schemas/Priority"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+      required: [sectionId, title]
+      example:
+        sectionId: "a1b2c3d4-0000-0000-0000-000000000001"
+        title: "Envoyer le rapport"
+        priority: standard
+        dueDate: null
+
+    TodoUpdate:
+      type: object
+      description: Tous les champs sont optionnels (modification partielle).
+      properties:
+        title:
+          type: string
+          minLength: 1
+        priority:
+          $ref: "#/components/schemas/Priority"
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+        done:
+          type: boolean
+      example:
+        done: true
+
+    TrackingPoint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+        nextStep:
+          type: string
+        nextDueDate:
+          type: string
+          format: date
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, status, nextStep, nextDueDate, createdAt]
+      example:
+        id: "c1b2c3d4-0000-0000-0000-000000000003"
+        title: "Livraison dépendance équipe A"
+        status: "En attente de validation par équipe A"
+        nextStep: "Relancer équipe A vendredi"
+        nextDueDate: "2026-08-28"
+        createdAt: "2026-08-23T10:00:00Z"
+
+    TrackingPointCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        status:
+          type: string
+        nextStep:
+          type: string
+        nextDueDate:
+          type: string
+          format: date
+          nullable: true
+      required: [title]
+      example:
+        title: "Livraison dépendance équipe A"
+        status: "En attente de validation par équipe A"
+        nextStep: "Relancer équipe A vendredi"
+        nextDueDate: "2026-08-28"
+
+    TrackingPointUpdate:
+      type: object
+      description: Tous les champs sont optionnels (modification partielle).
+      properties:
+        title:
+          type: string
+          minLength: 1
+        status:
+          type: string
+        nextStep:
+          type: string
+        nextDueDate:
+          type: string
+          format: date
+          nullable: true
+      example:
+        status: "Validé, en attente de déploiement"

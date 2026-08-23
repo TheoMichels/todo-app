@@ -6,72 +6,65 @@ import { todoRepository } from "../storage";
 export function useTodos(sectionId: string | undefined) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const loaded = await todoRepository.list();
+      setTodos(loaded);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    todoRepository.getAll().then((loaded) => {
-      // Older stored todos predate priority/dueDate; default them so they display correctly.
-      const normalized = loaded.map((t) => ({
-        priority: "standard" as const,
-        dueDate: null,
-        ...t,
-      }));
-      setTodos(normalized);
-      setLoading(false);
-    });
-  }, []);
-
-  const persist = useCallback((next: Todo[]) => {
-    setTodos(next);
-    todoRepository.save(next);
-  }, []);
+    load();
+  }, [load]);
 
   const addTodo = useCallback(
-    (
+    async (
       title: string,
       options?: { priority?: Priority; dueDate?: number | null }
     ) => {
       const trimmed = title.trim();
       if (!trimmed || !sectionId || sectionId === TRASH_SECTION_ID) return;
-      const newTodo: Todo = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      const created = await todoRepository.create({
         sectionId,
         title: trimmed,
-        done: false,
-        priority: options?.priority ?? "standard",
+        priority: options?.priority,
         dueDate: options?.dueDate ?? null,
-        createdAt: Date.now(),
-      };
-      persist([newTodo, ...todos]);
+      });
+      setTodos((prev) => [created, ...prev]);
     },
-    [todos, persist, sectionId]
+    [sectionId]
   );
 
   const toggleTodo = useCallback(
-    (id: string) => {
-      persist(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    async (id: string) => {
+      const current = todos.find((t) => t.id === id);
+      if (!current) return;
+      const updated = await todoRepository.update(id, { done: !current.done });
+      setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
     },
-    [todos, persist]
+    [todos]
   );
 
   const updateTodo = useCallback(
-    (id: string, patch: Partial<Pick<Todo, "title" | "priority" | "dueDate">>) => {
-      persist(
-        todos.map((t) => {
-          if (t.id !== id) return t;
-          const title = patch.title !== undefined ? patch.title.trim() : t.title;
-          return { ...t, ...patch, title: title || t.title };
-        })
-      );
+    async (id: string, patch: Partial<Pick<Todo, "title" | "priority" | "dueDate">>) => {
+      const updated = await todoRepository.update(id, patch);
+      setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
     },
-    [todos, persist]
+    []
   );
 
-  const removeTodo = useCallback(
-    (id: string) => {
-      persist(todos.filter((t) => t.id !== id));
-    },
-    [todos, persist]
-  );
+  const removeTodo = useCallback(async (id: string) => {
+    await todoRepository.remove(id);
+    setTodos((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const sectionTodos = useMemo(() => {
     if (sectionId === TRASH_SECTION_ID) return todos.filter((t) => t.done);
@@ -81,6 +74,8 @@ export function useTodos(sectionId: string | undefined) {
   return {
     todos: sectionTodos,
     loading,
+    error,
+    retry: load,
     addTodo,
     toggleTodo,
     updateTodo,

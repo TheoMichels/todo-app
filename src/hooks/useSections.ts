@@ -2,44 +2,40 @@ import { useCallback, useEffect, useState } from "react";
 import { Section } from "../types/section";
 import { sectionRepository } from "../storage";
 
-const DEFAULT_SECTION: Section = {
-  id: "default",
-  name: "Général",
-  createdAt: 0,
-};
-
 export function useSections() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    sectionRepository.getAll().then(async (loaded) => {
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const loaded = await sectionRepository.list();
       if (loaded.length === 0) {
-        await sectionRepository.save([DEFAULT_SECTION]);
-        setSections([DEFAULT_SECTION]);
+        const defaultSection = await sectionRepository.create("Général");
+        setSections([defaultSection]);
       } else {
         setSections(loaded);
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
       setLoading(false);
-    });
+    }
   }, []);
 
-  const addSection = useCallback(
-    (name: string) => {
-      const trimmed = name.trim();
-      if (!trimmed) return;
-      const newSection: Section = {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        name: trimmed,
-        createdAt: Date.now(),
-      };
-      const next = [...sections, newSection];
-      setSections(next);
-      sectionRepository.save(next);
-      return newSection;
-    },
-    [sections]
-  );
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  return { sections, loading, addSection };
+  const addSection = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return undefined;
+    const newSection = await sectionRepository.create(trimmed);
+    setSections((prev) => [...prev, newSection]);
+    return newSection;
+  }, []);
+
+  return { sections, loading, error, retry: load, addSection };
 }
