@@ -8,6 +8,7 @@ type Props = {
   onToggle: (id: string) => void;
   onOpen: (id: string) => void;
   onRemove: (id: string) => void;
+  onRestore?: (id: string) => void;
   sectionName?: string;
 };
 
@@ -23,6 +24,7 @@ export function TodoItem({
   onToggle,
   onOpen,
   onRemove,
+  onRestore,
   sectionName,
 }: Props) {
   return (
@@ -66,6 +68,16 @@ export function TodoItem({
           </View>
         )}
       </Pressable>
+
+      {onRestore && (
+        <Pressable
+          style={cursorPointer}
+          onPress={() => onRestore(todo.id)}
+          hitSlop={8}
+        >
+          <Text style={styles.restore}>↺</Text>
+        </Pressable>
+      )}
 
       <Pressable
         style={cursorPointer}
@@ -138,6 +150,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     color: colors.textPrimary,
+  },
+  restore: {
+    fontSize: 18,
+    color: colors.accent,
+    paddingHorizontal: 8,
   },
   delete: {
     fontSize: 16,
