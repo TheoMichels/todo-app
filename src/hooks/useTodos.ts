@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Todo } from "../types/todo";
+import { Priority, Todo } from "../types/todo";
+import { TRASH_SECTION_ID } from "../types/section";
 import { todoRepository } from "../storage";
 
 export function useTodos(sectionId: string | undefined) {
@@ -25,16 +26,19 @@ export function useTodos(sectionId: string | undefined) {
   }, []);
 
   const addTodo = useCallback(
-    (title: string) => {
+    (
+      title: string,
+      options?: { priority?: Priority; dueDate?: number | null }
+    ) => {
       const trimmed = title.trim();
-      if (!trimmed || !sectionId) return;
+      if (!trimmed || !sectionId || sectionId === TRASH_SECTION_ID) return;
       const newTodo: Todo = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         sectionId,
         title: trimmed,
         done: false,
-        priority: "standard",
-        dueDate: null,
+        priority: options?.priority ?? "standard",
+        dueDate: options?.dueDate ?? null,
         createdAt: Date.now(),
       };
       persist([newTodo, ...todos]);
@@ -69,10 +73,10 @@ export function useTodos(sectionId: string | undefined) {
     [todos, persist]
   );
 
-  const sectionTodos = useMemo(
-    () => todos.filter((t) => t.sectionId === sectionId),
-    [todos, sectionId]
-  );
+  const sectionTodos = useMemo(() => {
+    if (sectionId === TRASH_SECTION_ID) return todos.filter((t) => t.done);
+    return todos.filter((t) => t.sectionId === sectionId && !t.done);
+  }, [todos, sectionId]);
 
   return {
     todos: sectionTodos,

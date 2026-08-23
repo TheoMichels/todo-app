@@ -7,8 +7,9 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Section } from "../types/section";
+import { Section, TRASH_SECTION_ID } from "../types/section";
 import { colors } from "../theme/colors";
+import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
   sections: Section[];
@@ -38,7 +39,7 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd }: Props) {
           return (
             <Pressable
               key={section.id}
-              style={[styles.item, selected && styles.itemSelected]}
+              style={[styles.item, selected && styles.itemSelected, cursorPointer]}
               onPress={() => onSelect(section.id)}
             >
               <Text
@@ -50,6 +51,28 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd }: Props) {
             </Pressable>
           );
         })}
+
+        <View style={styles.divider} />
+
+        <Pressable
+          style={[
+            styles.item,
+            selectedId === TRASH_SECTION_ID && styles.itemSelected,
+            cursorPointer,
+          ]}
+          onPress={() => onSelect(TRASH_SECTION_ID)}
+        >
+          <Text
+            style={[
+              styles.itemText,
+              styles.trashText,
+              selectedId === TRASH_SECTION_ID && styles.itemTextSelected,
+            ]}
+            numberOfLines={1}
+          >
+            Supprimés
+          </Text>
+        </Pressable>
       </ScrollView>
 
       {isAdding ? (
@@ -67,7 +90,10 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd }: Props) {
           autoFocus
         />
       ) : (
-        <Pressable style={styles.addButton} onPress={() => setIsAdding(true)}>
+        <Pressable
+          style={[styles.addButton, cursorPointer]}
+          onPress={() => setIsAdding(true)}
+        >
           <Text style={styles.addButtonText}>+ Section</Text>
         </Pressable>
       )}
@@ -109,6 +135,14 @@ const styles = StyleSheet.create({
   },
   itemTextSelected: {
     color: colors.textPrimary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 10,
+  },
+  trashText: {
+    color: colors.textMuted,
   },
   addButton: {
     paddingHorizontal: 14,
