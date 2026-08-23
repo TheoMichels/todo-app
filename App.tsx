@@ -18,6 +18,7 @@ import { Sidebar } from "./src/components/Sidebar";
 import { TaskDetailPanel } from "./src/components/TaskDetailPanel";
 import { NewTaskForm } from "./src/components/NewTaskForm";
 import { colors, gradient } from "./src/theme/colors";
+import { cursorPointer } from "./src/theme/webCursor";
 import { TRASH_SECTION_ID } from "./src/types/section";
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
     removeTodo,
   } = useTodos(selectedSectionId);
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   const handleAddSection = (name: string) => {
     const section = addSection(name);
@@ -73,7 +75,7 @@ export default function App() {
         >
           <View style={styles.stage}>
             <View style={styles.layout}>
-              {!sectionsLoading && (
+              {!sectionsLoading && sidebarVisible && (
                 <Sidebar
                   sections={sections}
                   selectedId={selectedSectionId}
@@ -86,9 +88,18 @@ export default function App() {
               )}
 
               <View style={styles.content}>
-                <Text style={styles.header}>
-                  {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
-                </Text>
+                <View style={styles.headerRow}>
+                  <Pressable
+                    style={[styles.sidebarToggle, cursorPointer]}
+                    onPress={() => setSidebarVisible((v) => !v)}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.sidebarToggleIcon}>☰</Text>
+                  </Pressable>
+                  <Text style={styles.header}>
+                    {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
+                  </Text>
+                </View>
 
                 {!isTrashView && <NewTaskForm onAdd={addTodo} />}
 
@@ -110,6 +121,7 @@ export default function App() {
                         onToggle={toggleTodo}
                         onOpen={setSelectedTodoId}
                         onRemove={handleRemove}
+                        onRestore={isTrashView ? toggleTodo : undefined}
                         sectionName={
                           isTrashView ? sectionNameById[item.sectionId] : undefined
                         }
@@ -182,10 +194,29 @@ const styles = StyleSheet.create({
     backgroundColor: colors.panel,
     padding: 24,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
+  sidebarToggle: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sidebarToggleIcon: {
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
   header: {
     fontSize: 26,
     fontWeight: "700",
-    marginBottom: 20,
     color: colors.textPrimary,
   },
   empty: {
