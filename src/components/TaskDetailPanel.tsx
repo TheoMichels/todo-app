@@ -61,9 +61,6 @@ export function TaskDetailPanel({ todo, onChange, onClose }: Props) {
           onChangeText={setTitle}
           onBlur={commitTitle}
           onSubmitEditing={commitTitle}
-          onKeyPress={(e) => {
-            if (e.nativeEvent.key === "Enter") commitTitle();
-          }}
         />
 
         <Text style={styles.fieldLabel}>Priorité</Text>

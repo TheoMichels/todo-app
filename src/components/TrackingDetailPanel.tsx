@@ -62,9 +62,6 @@ export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
           onChangeText={setTitle}
           onBlur={commitTitle}
           onSubmitEditing={commitTitle}
-          onKeyPress={(e) => {
-            if (e.nativeEvent.key === "Enter") commitTitle();
-          }}
         />
 
         <Text style={styles.fieldLabel}>Statut actuel</Text>

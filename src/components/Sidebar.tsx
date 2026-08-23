@@ -123,9 +123,6 @@ export function Sidebar({
               placeholderTextColor={colors.textMuted}
               onSubmitEditing={commitAdd}
               onBlur={commitAdd}
-              onKeyPress={(e) => {
-                if (e.nativeEvent.key === "Enter") commitAdd();
-              }}
               autoFocus
             />
           ) : (

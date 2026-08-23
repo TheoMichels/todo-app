@@ -48,9 +48,6 @@ export function NewTaskForm({ onAdd }: Props) {
           value={title}
           onChangeText={setTitle}
           onSubmitEditing={handleAdd}
-          onKeyPress={(e) => {
-            if (e.nativeEvent.key === "Enter") handleAdd();
-          }}
           returnKeyType="done"
         />
 
