@@ -8,6 +8,7 @@ type Props = {
   onToggle: (id: string) => void;
   onOpen: (id: string) => void;
   onRemove: (id: string) => void;
+  sectionName?: string;
 };
 
 function formatDueDate(dateMs: number) {
@@ -17,7 +18,13 @@ function formatDueDate(dateMs: number) {
   });
 }
 
-export function TodoItem({ todo, onToggle, onOpen, onRemove }: Props) {
+export function TodoItem({
+  todo,
+  onToggle,
+  onOpen,
+  onRemove,
+  sectionName,
+}: Props) {
   return (
     <View style={styles.row}>
       <Pressable
@@ -37,8 +44,13 @@ export function TodoItem({ todo, onToggle, onOpen, onRemove }: Props) {
         <Text style={[styles.title, todo.done && styles.titleDone]}>
           {todo.title}
         </Text>
-        {(todo.priority === "urgent" || todo.dueDate) && (
+        {(todo.priority === "urgent" || todo.dueDate || sectionName) && (
           <View style={styles.badgeRow}>
+            {sectionName && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{sectionName}</Text>
+              </View>
+            )}
             {todo.priority === "urgent" && (
               <View style={[styles.badge, styles.badgeUrgent]}>
                 <Text style={styles.badgeText}>Urgent</Text>

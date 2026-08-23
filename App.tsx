@@ -9,7 +9,6 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 import { useTodos } from "./src/hooks/useTodos";
@@ -17,7 +16,9 @@ import { useSections } from "./src/hooks/useSections";
 import { TodoItem } from "./src/components/TodoItem";
 import { Sidebar } from "./src/components/Sidebar";
 import { TaskDetailPanel } from "./src/components/TaskDetailPanel";
+import { NewTaskForm } from "./src/components/NewTaskForm";
 import { colors, gradient } from "./src/theme/colors";
+import { TRASH_SECTION_ID } from "./src/types/section";
 
 export default function App() {
   const { sections, loading: sectionsLoading, addSection } = useSections();
@@ -37,13 +38,7 @@ export default function App() {
     updateTodo,
     removeTodo,
   } = useTodos(selectedSectionId);
-  const [input, setInput] = useState("");
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
-
-  const handleAdd = () => {
-    addTodo(input);
-    setInput("");
-  };
 
   const handleAddSection = (name: string) => {
     const section = addSection(name);
@@ -56,8 +51,12 @@ export default function App() {
   };
 
   const loading = sectionsLoading || todosLoading;
+  const isTrashView = selectedSectionId === TRASH_SECTION_ID;
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedTodo = todos.find((t) => t.id === selectedTodoId);
+  const sectionNameById = Object.fromEntries(
+    sections.map((s) => [s.id, s.name])
+  );
 
   return (
     <LinearGradient
@@ -88,31 +87,19 @@ export default function App() {
 
               <View style={styles.content}>
                 <Text style={styles.header}>
-                  {selectedSection?.name ?? "Mes tâches"}
+                  {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
                 </Text>
 
-                <View style={styles.inputRow}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Ajouter une tâche..."
-                    placeholderTextColor={colors.textMuted}
-                    value={input}
-                    onChangeText={setInput}
-                    onSubmitEditing={handleAdd}
-                    onKeyPress={(e) => {
-                      if (e.nativeEvent.key === "Enter") handleAdd();
-                    }}
-                    returnKeyType="done"
-                  />
-                  <Pressable style={styles.addButton} onPress={handleAdd}>
-                    <Text style={styles.addButtonText}>Ajouter</Text>
-                  </Pressable>
-                </View>
+                {!isTrashView && <NewTaskForm onAdd={addTodo} />}
 
                 {loading ? (
                   <Text style={styles.empty}>Chargement...</Text>
                 ) : todos.length === 0 ? (
-                  <Text style={styles.empty}>Aucune tâche pour le moment.</Text>
+                  <Text style={styles.empty}>
+                    {isTrashView
+                      ? "Aucune tâche terminée."
+                      : "Aucune tâche pour le moment."}
+                  </Text>
                 ) : (
                   <FlatList
                     data={todos}
@@ -123,6 +110,9 @@ export default function App() {
                         onToggle={toggleTodo}
                         onOpen={setSelectedTodoId}
                         onRemove={handleRemove}
+                        sectionName={
+                          isTrashView ? sectionNameById[item.sectionId] : undefined
+                        }
                       />
                     )}
                   />
@@ -197,32 +187,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginBottom: 20,
     color: colors.textPrimary,
-  },
-  inputRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: colors.textPrimary,
-  },
-  addButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-  },
-  addButtonText: {
-    color: colors.textPrimary,
-    fontWeight: "600",
   },
   empty: {
     textAlign: "center",
