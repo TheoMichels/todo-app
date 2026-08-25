@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -16,6 +17,7 @@ import {
 import { useTodos } from "./src/hooks/useTodos";
 import { useSections } from "./src/hooks/useSections";
 import { useTrackingPoints } from "./src/hooks/useTrackingPoints";
+import { useNotes } from "./src/hooks/useNotes";
 import { TodoItem } from "./src/components/TodoItem";
 import { Sidebar } from "./src/components/Sidebar";
 import { TaskDetailPanel } from "./src/components/TaskDetailPanel";
@@ -23,12 +25,14 @@ import { NewTaskForm } from "./src/components/NewTaskForm";
 import { TrackingPointCard } from "./src/components/TrackingPointCard";
 import { NewTrackingPointForm } from "./src/components/NewTrackingPointForm";
 import { TrackingDetailPanel } from "./src/components/TrackingDetailPanel";
+import { NoteCard } from "./src/components/NoteCard";
+import { NewNoteForm } from "./src/components/NewNoteForm";
 import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
 import { Logo } from "./src/components/Logo";
 import { colors, gradient } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
-import { TRASH_SECTION_ID } from "./src/types/section";
+import { NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
 
 // Matches Sidebar's own width (220) + marginRight (20).
 const SIDEBAR_TOTAL_WIDTH = 240;
@@ -84,6 +88,16 @@ export default function App() {
   } = useTrackingPoints(selectedSectionId);
   const [selectedPointId, setSelectedPointId] = useState<string>();
 
+  const {
+    notes,
+    loading: notesLoading,
+    error: notesError,
+    retry: retryNotes,
+    addNote,
+    updateNote,
+    removeNote,
+  } = useNotes();
+
   const [actionError, setActionError] = useState<string | null>(null);
 
   const runAction = useCallback(
@@ -136,8 +150,17 @@ export default function App() {
       if (id === selectedPointId) setSelectedPointId(undefined);
     });
 
+  const handleAddNote = (title: string, description: string) =>
+    runAction(() => addNote(title, description), { rethrow: true });
+
+  const handleUpdateNote = (id: string, title: string, description: string) =>
+    runAction(() => updateNote(id, title, description));
+
+  const handleRemoveNote = (id: string) => runAction(() => removeNote(id));
+
   const tasksLoading = sectionsLoading || todosLoading;
   const isTrashView = selectedSectionId === TRASH_SECTION_ID;
+  const isNotesView = selectedSectionId === NOTES_SECTION_ID;
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
   const selectedTodo = todos.find((t) => t.id === selectedTodoId);
   const selectedPoint = points.find((p) => p.id === selectedPointId);
@@ -211,84 +234,112 @@ export default function App() {
                   )}
 
                   <View style={styles.panelsRow}>
-                    <View style={styles.content}>
-                      <Text style={styles.header}>
-                        {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
-                      </Text>
+                    {isNotesView ? (
+                      <View style={styles.content}>
+                        <Text style={styles.header}>Notes</Text>
 
-                      {sectionsError || todosError ? (
-                        <ErrorState
-                          message={sectionsError ?? todosError ?? ""}
-                          onRetry={() => {
-                            retrySections();
-                            retryTodos();
-                          }}
-                        />
-                      ) : (
-                        <>
-                          {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
+                        {notesError ? (
+                          <ErrorState message={notesError} onRetry={retryNotes} />
+                        ) : notesLoading ? (
+                          <Text style={styles.empty}>Chargement...</Text>
+                        ) : (
+                          <ScrollView showsVerticalScrollIndicator={false}>
+                            <View style={styles.notesGrid}>
+                              {notes.map((note) => (
+                                <NoteCard
+                                  key={note.id}
+                                  note={note}
+                                  onUpdate={handleUpdateNote}
+                                  onRemove={handleRemoveNote}
+                                />
+                              ))}
+                              <NewNoteForm onSave={handleAddNote} />
+                            </View>
+                          </ScrollView>
+                        )}
+                      </View>
+                    ) : (
+                      <>
+                        <View style={styles.content}>
+                          <Text style={styles.header}>
+                            {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
+                          </Text>
 
-                          {tasksLoading ? (
-                            <Text style={styles.empty}>Chargement...</Text>
-                          ) : todos.length === 0 ? (
+                          {sectionsError || todosError ? (
+                            <ErrorState
+                              message={sectionsError ?? todosError ?? ""}
+                              onRetry={() => {
+                                retrySections();
+                                retryTodos();
+                              }}
+                            />
+                          ) : (
+                            <>
+                              {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
+
+                              {tasksLoading ? (
+                                <Text style={styles.empty}>Chargement...</Text>
+                              ) : todos.length === 0 ? (
+                                <Text style={styles.empty}>
+                                  {isTrashView
+                                    ? "Aucune tâche terminée."
+                                    : "Aucune tâche pour le moment."}
+                                </Text>
+                              ) : (
+                                <FlatList
+                                  data={todos}
+                                  keyExtractor={(item) => item.id}
+                                  renderItem={({ item }) => (
+                                    <TodoItem
+                                      todo={item}
+                                      onToggle={handleToggle}
+                                      onOpen={setSelectedTodoId}
+                                      onRemove={handleRemove}
+                                      onRestore={isTrashView ? handleToggle : undefined}
+                                      sectionName={
+                                        isTrashView ? sectionNameById[item.sectionId] : undefined
+                                      }
+                                    />
+                                  )}
+                                />
+                              )}
+                            </>
+                          )}
+                        </View>
+
+                        <View style={styles.content}>
+                          <Text style={styles.header}>Points de suivi</Text>
+
+                          {pointsError ? (
+                            <ErrorState message={pointsError} onRetry={retryPoints} />
+                          ) : isTrashView ? (
                             <Text style={styles.empty}>
-                              {isTrashView
-                                ? "Aucune tâche terminée."
-                                : "Aucune tâche pour le moment."}
+                              Aucun point de suivi dans les éléments supprimés.
                             </Text>
                           ) : (
                             <FlatList
-                              data={todos}
+                              data={points}
                               keyExtractor={(item) => item.id}
+                              ListHeaderComponent={
+                                pointsLoading ? (
+                                  <Text style={styles.empty}>Chargement...</Text>
+                                ) : null
+                              }
                               renderItem={({ item }) => (
-                                <TodoItem
-                                  todo={item}
-                                  onToggle={handleToggle}
-                                  onOpen={setSelectedTodoId}
-                                  onRemove={handleRemove}
-                                  onRestore={isTrashView ? handleToggle : undefined}
-                                  sectionName={
-                                    isTrashView ? sectionNameById[item.sectionId] : undefined
-                                  }
+                                <TrackingPointCard
+                                  point={item}
+                                  onOpen={setSelectedPointId}
+                                  onRemove={handleRemovePoint}
                                 />
                               )}
+                              ListFooterComponent={
+                                <NewTrackingPointForm onSave={handleAddPoint} />
+                              }
                             />
                           )}
-                        </>
-                      )}
-                    </View>
-
-                    <View style={styles.content}>
-                      <Text style={styles.header}>Points de suivi</Text>
-
-                      {pointsError ? (
-                        <ErrorState message={pointsError} onRetry={retryPoints} />
-                      ) : isTrashView ? (
-                        <Text style={styles.empty}>
-                          Aucun point de suivi dans les éléments supprimés.
-                        </Text>
-                      ) : (
-                        <FlatList
-                          data={points}
-                          keyExtractor={(item) => item.id}
-                          ListHeaderComponent={
-                            pointsLoading ? (
-                              <Text style={styles.empty}>Chargement...</Text>
-                            ) : null
-                          }
-                          renderItem={({ item }) => (
-                            <TrackingPointCard
-                              point={item}
-                              onOpen={setSelectedPointId}
-                              onRemove={handleRemovePoint}
-                            />
-                          )}
-                          ListFooterComponent={
-                            <NewTrackingPointForm onSave={handleAddPoint} />
-                          }
-                        />
-                      )}
-                    </View>
+                        </View>
+                      </>
+                    )}
                   </View>
                 </View>
               </View>
@@ -431,5 +482,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: colors.textMuted,
     marginTop: 40,
+  },
+  notesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
   },
 });

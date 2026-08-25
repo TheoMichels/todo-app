@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Section, TRASH_SECTION_ID } from "../types/section";
+import { NOTES_SECTION_ID, Section, TRASH_SECTION_ID } from "../types/section";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
@@ -66,46 +66,75 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
             );
           }
 
+          // react-native-web forwards onMouseEnter/onMouseLeave straight to the
+          // DOM node, but RN's official View types don't declare them (web-only
+          // runtime behavior), hence the loosely-typed spread.
+          const hoverProps = {
+            onMouseEnter: () => setHoveredId(section.id),
+            onMouseLeave: () =>
+              setHoveredId((current) => (current === section.id ? null : current)),
+          };
+
           return (
-            <Pressable
+            <View
               key={section.id}
-              style={[styles.item, selected && styles.itemSelected, cursorPointer]}
-              onPress={() => onSelect(section.id)}
-              onHoverIn={() => setHoveredId(section.id)}
-              onHoverOut={() => setHoveredId((current) => (current === section.id ? null : current))}
+              style={[styles.item, selected && styles.itemSelected]}
+              {...hoverProps}
             >
-              <View style={styles.itemRow}>
+              <Pressable
+                style={[styles.itemPressable, cursorPointer]}
+                onPress={() => onSelect(section.id)}
+              >
                 <Text
                   style={[styles.itemText, selected && styles.itemTextSelected]}
                   numberOfLines={1}
                 >
                   {section.name}
                 </Text>
-                {hoveredId === section.id && (
-                  <Pressable
-                    style={cursorPointer}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      startEditing(section);
-                    }}
-                    hitSlop={8}
+              </Pressable>
+              {hoveredId === section.id && (
+                <Pressable
+                  style={cursorPointer}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    startEditing(section);
+                  }}
+                  hitSlop={8}
+                >
+                  <Text
+                    style={[
+                      styles.editIcon,
+                      selected && styles.editIconSelected,
+                    ]}
                   >
-                    <Text
-                      style={[
-                        styles.editIcon,
-                        selected && styles.editIconSelected,
-                      ]}
-                    >
-                      ✎
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
-            </Pressable>
+                    ✎
+                  </Text>
+                </Pressable>
+              )}
+            </View>
           );
         })}
 
         <View style={styles.divider} />
+
+        <Pressable
+          style={[
+            styles.item,
+            selectedId === NOTES_SECTION_ID && styles.itemSelected,
+            cursorPointer,
+          ]}
+          onPress={() => onSelect(NOTES_SECTION_ID)}
+        >
+          <Text
+            style={[
+              styles.itemText,
+              selectedId === NOTES_SECTION_ID && styles.itemTextSelected,
+            ]}
+            numberOfLines={1}
+          >
+            Notes
+          </Text>
+        </Pressable>
 
         <Pressable
           style={[
@@ -171,6 +200,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   item: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
@@ -179,11 +211,8 @@ const styles = StyleSheet.create({
   itemSelected: {
     backgroundColor: colors.accent,
   },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
+  itemPressable: {
+    flex: 1,
   },
   itemText: {
     flex: 1,
