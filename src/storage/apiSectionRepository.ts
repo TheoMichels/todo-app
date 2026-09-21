@@ -1,37 +1,32 @@
 import { Section } from "../types/section";
 import { SectionRepository } from "./sectionRepository";
-import { apiRequest } from "../api/client";
-import { dateTimeFromApi } from "../api/dates";
+import { OfflineStore } from "./db";
 
-type SectionDto = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
-
-function fromDto(dto: SectionDto): Section {
-  return { id: dto.id, name: dto.name, createdAt: dateTimeFromApi(dto.createdAt) };
-}
+const store = new OfflineStore<Section>("sections");
 
 export const apiSectionRepository: SectionRepository = {
   async list() {
-    const dtos = await apiRequest<SectionDto[]>("/sections");
-    return dtos.map(fromDto);
+    return await store.load();
   },
-
   async create(name) {
-    const dto = await apiRequest<SectionDto>("/sections", {
-      method: "POST",
-      body: { name },
-    });
-    return fromDto(dto);
+    const all = await store.loadLocal();
+    const newSection: Section = {
+      id: Math.random().toString(36).substring(2, 9),
+      name,
+      createdAt: Date.now(),
+    };
+    all.push(newSection);
+    await store.saveAll(all);
+    return newSection;
   },
-
   async update(id, name) {
-    const dto = await apiRequest<SectionDto>(`/sections/${id}`, {
-      method: "PATCH",
-      body: { name },
-    });
-    return fromDto(dto);
+    const all = await store.loadLocal();
+    const index = all.findIndex(s => s.id === id);
+    if (index === -1) throw new Error("Section not found");
+
+    const updated = { ...all[index], name };
+    all[index] = updated;
+    await store.saveAll(all);
+    return updated;
   },
 };

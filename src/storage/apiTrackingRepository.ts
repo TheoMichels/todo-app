@@ -1,65 +1,41 @@
 import { TrackingPoint } from "../types/trackingPoint";
 import { TrackingRepository } from "./trackingRepository";
-import { apiRequest } from "../api/client";
-import { dateFromApi, dateTimeFromApi, dateToApi } from "../api/dates";
+import { OfflineStore } from "./db";
 
-type TrackingPointDto = {
-  id: string;
-  sectionId: string;
-  title: string;
-  status: string;
-  nextStep: string;
-  nextDueDate: string | null;
-  createdAt: string;
-};
-
-function fromDto(dto: TrackingPointDto): TrackingPoint {
-  return {
-    id: dto.id,
-    sectionId: dto.sectionId,
-    title: dto.title,
-    status: dto.status,
-    nextStep: dto.nextStep,
-    nextDueDate: dateFromApi(dto.nextDueDate),
-    createdAt: dateTimeFromApi(dto.createdAt),
-  };
-}
+const store = new OfflineStore<TrackingPoint>("trackings");
 
 export const apiTrackingRepository: TrackingRepository = {
   async list() {
-    const dtos = await apiRequest<TrackingPointDto[]>("/tracking-points");
-    return dtos.map(fromDto);
+    return await store.load();
   },
-
   async create(input) {
-    const dto = await apiRequest<TrackingPointDto>("/tracking-points", {
-      method: "POST",
-      body: {
-        sectionId: input.sectionId,
-        title: input.title,
-        status: input.status,
-        nextStep: input.nextStep,
-        nextDueDate: dateToApi(input.nextDueDate),
-      },
-    });
-    return fromDto(dto);
+    const all = await store.loadLocal();
+    const newTracking: TrackingPoint = {
+      id: Math.random().toString(36).substring(2, 9),
+      sectionId: input.sectionId,
+      title: input.title,
+      status: input.status,
+      nextStep: input.nextStep,
+      nextDueDate: input.nextDueDate ?? null,
+      createdAt: Date.now(),
+    };
+    all.push(newTracking);
+    await store.saveAll(all);
+    return newTracking;
   },
-
   async update(id, patch) {
-    const body: Record<string, unknown> = {};
-    if (patch.title !== undefined) body.title = patch.title;
-    if (patch.status !== undefined) body.status = patch.status;
-    if (patch.nextStep !== undefined) body.nextStep = patch.nextStep;
-    if (patch.nextDueDate !== undefined) body.nextDueDate = dateToApi(patch.nextDueDate);
+    const all = await store.loadLocal();
+    const index = all.findIndex(t => t.id === id);
+    if (index === -1) throw new Error("Tracking not found");
 
-    const dto = await apiRequest<TrackingPointDto>(`/tracking-points/${id}`, {
-      method: "PATCH",
-      body,
-    });
-    return fromDto(dto);
+    const updated = { ...all[index], ...patch };
+    all[index] = updated;
+    await store.saveAll(all);
+    return updated;
   },
-
   async remove(id) {
-    await apiRequest<void>(`/tracking-points/${id}`, { method: "DELETE" });
+    let all = await store.loadLocal();
+    all = all.filter(t => t.id !== id);
+    await store.saveAll(all);
   },
 };

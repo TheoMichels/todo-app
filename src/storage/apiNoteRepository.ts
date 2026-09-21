@@ -1,47 +1,38 @@
 import { Note } from "../types/note";
 import { NoteRepository } from "./noteRepository";
-import { apiRequest } from "../api/client";
-import { dateTimeFromApi } from "../api/dates";
+import { OfflineStore } from "./db";
 
-type NoteDto = {
-  id: string;
-  title: string;
-  description: string | null;
-  createdAt: string;
-};
-
-function fromDto(dto: NoteDto): Note {
-  return {
-    id: dto.id,
-    title: dto.title,
-    description: dto.description ?? "",
-    createdAt: dateTimeFromApi(dto.createdAt),
-  };
-}
+const store = new OfflineStore<Note>("notes");
 
 export const apiNoteRepository: NoteRepository = {
   async list() {
-    const dtos = await apiRequest<NoteDto[]>("/notes");
-    return dtos.map(fromDto);
+    return await store.load();
   },
-
   async create(input) {
-    const dto = await apiRequest<NoteDto>("/notes", {
-      method: "POST",
-      body: { title: input.title, description: input.description },
-    });
-    return fromDto(dto);
+    const all = await store.loadLocal();
+    const newNote: Note = {
+      id: Math.random().toString(36).substring(2, 9),
+      title: input.title,
+      description: input.description ?? "",
+      createdAt: Date.now(),
+    };
+    all.push(newNote);
+    await store.saveAll(all);
+    return newNote;
   },
-
   async update(id, patch) {
-    const dto = await apiRequest<NoteDto>(`/notes/${id}`, {
-      method: "PATCH",
-      body: { title: patch.title, description: patch.description },
-    });
-    return fromDto(dto);
-  },
+    const all = await store.loadLocal();
+    const index = all.findIndex(n => n.id === id);
+    if (index === -1) throw new Error("Note not found");
 
+    const updated = { ...all[index], ...patch };
+    all[index] = updated;
+    await store.saveAll(all);
+    return updated;
+  },
   async remove(id) {
-    await apiRequest<void>(`/notes/${id}`, { method: "DELETE" });
+    let all = await store.loadLocal();
+    all = all.filter(n => n.id !== id);
+    await store.saveAll(all);
   },
 };
