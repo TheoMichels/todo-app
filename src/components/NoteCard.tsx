@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { Note } from "../types/note";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
@@ -11,6 +11,8 @@ type Props = {
 };
 
 export function NoteCard({ note, onUpdate, onRemove }: Props) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(note.title);
   const [description, setDescription] = useState(note.description);
@@ -31,7 +33,7 @@ export function NoteCard({ note, onUpdate, onRemove }: Props) {
 
   if (isEditing) {
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, isMobile && styles.cardMobile]}>
         <TextInput
           style={styles.titleInput}
           value={title}
@@ -62,7 +64,7 @@ export function NoteCard({ note, onUpdate, onRemove }: Props) {
   }
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isMobile && styles.cardMobile]}>
       <View style={styles.headerRow}>
         <Text style={styles.title} numberOfLines={2}>
           {note.title}
@@ -89,6 +91,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
+  },
+  cardMobile: {
+    width: "100%",
   },
   headerRow: {
     flexDirection: "row",
@@ -161,7 +166,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   saveButtonText: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
     fontWeight: "600",
     fontSize: 13,
   },

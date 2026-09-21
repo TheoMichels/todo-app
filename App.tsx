@@ -12,6 +12,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { useTodos } from "./src/hooks/useTodos";
@@ -54,6 +55,10 @@ export default function App() {
     }
   }, [sections, selectedSectionId]);
 
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [mobileActiveTab, setMobileActiveTab] = useState<"tasks" | "tracking">("tasks");
+
   const {
     todos,
     loading: todosLoading,
@@ -69,6 +74,8 @@ export default function App() {
   const sidebarAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    // If mobile, default sidebar to hidden; if desktop, default to visible.
+    // However, since we might switch dynamically, let's handle the animation.
     Animated.timing(sidebarAnim, {
       toValue: sidebarVisible ? 1 : 0,
       duration: 250,
@@ -76,6 +83,15 @@ export default function App() {
       useNativeDriver: false,
     }).start();
   }, [sidebarVisible, sidebarAnim]);
+
+  // Ensure sidebar is closed when switching to mobile, or initialized properly.
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarVisible(false);
+    } else {
+      setSidebarVisible(true);
+    }
+  }, [isMobile]);
 
   const {
     points,
@@ -201,15 +217,23 @@ export default function App() {
               </View>
 
               <View style={styles.layout}>
+                {isMobile && sidebarVisible && (
+                  <Pressable
+                    style={[styles.backdrop, { zIndex: 40 }]}
+                    onPress={() => setSidebarVisible(false)}
+                  />
+                )}
                 <Animated.View
                   style={[
                     styles.sidebarWrapper,
+                    isMobile && styles.sidebarWrapperMobile,
                     {
                       width: sidebarAnim.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0, SIDEBAR_TOTAL_WIDTH],
+                        outputRange: [0, isMobile ? 300 : SIDEBAR_TOTAL_WIDTH],
                       }),
                       opacity: sidebarAnim,
+                      zIndex: isMobile ? 50 : 1,
                     },
                   ]}
                 >
@@ -219,6 +243,7 @@ export default function App() {
                     onSelect={(id) => {
                       setSelectedSectionId(id);
                       setSelectedTodoId(undefined);
+                      if (isMobile) setSidebarVisible(false);
                     }}
                     onAdd={handleAddSection}
                     onRename={handleRenameSection}
@@ -233,7 +258,23 @@ export default function App() {
                     />
                   )}
 
-                  <View style={styles.panelsRow}>
+                    {!isNotesView && isMobile && (
+                      <View style={styles.mobileTabs}>
+                        <Pressable
+                          style={[styles.mobileTab, mobileActiveTab === "tasks" && styles.mobileTabActive, cursorPointer]}
+                          onPress={() => setMobileActiveTab("tasks")}
+                        >
+                          <Text style={[styles.mobileTabText, mobileActiveTab === "tasks" && styles.mobileTabTextActive]}>Tâches</Text>
+                        </Pressable>
+                        <Pressable
+                          style={[styles.mobileTab, mobileActiveTab === "tracking" && styles.mobileTabActive, cursorPointer]}
+                          onPress={() => setMobileActiveTab("tracking")}
+                        >
+                          <Text style={[styles.mobileTabText, mobileActiveTab === "tracking" && styles.mobileTabTextActive]}>Points de suivi</Text>
+                        </Pressable>
+                      </View>
+                    )}
+                    <View style={[styles.panelsRow, isMobile && { flexDirection: "column" }]}>
                     {isNotesView ? (
                       <View style={styles.content}>
                         <Text style={styles.header}>Notes</Text>
@@ -260,87 +301,91 @@ export default function App() {
                       </View>
                     ) : (
                       <>
-                        <View style={styles.content}>
-                          <Text style={styles.header}>
-                            {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
-                          </Text>
-
-                          {sectionsError || todosError ? (
-                            <ErrorState
-                              message={sectionsError ?? todosError ?? ""}
-                              onRetry={() => {
-                                retrySections();
-                                retryTodos();
-                              }}
-                            />
-                          ) : (
-                            <>
-                              {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
-
-                              {tasksLoading ? (
-                                <Text style={styles.empty}>Chargement...</Text>
-                              ) : todos.length === 0 ? (
-                                <Text style={styles.empty}>
-                                  {isTrashView
-                                    ? "Aucune tâche terminée."
-                                    : "Aucune tâche pour le moment."}
-                                </Text>
-                              ) : (
-                                <FlatList
-                                  data={todos}
-                                  keyExtractor={(item) => item.id}
-                                  renderItem={({ item }) => (
-                                    <TodoItem
-                                      todo={item}
-                                      onToggle={handleToggle}
-                                      onOpen={setSelectedTodoId}
-                                      onRemove={handleRemove}
-                                      onRestore={isTrashView ? handleToggle : undefined}
-                                      sectionName={
-                                        isTrashView ? sectionNameById[item.sectionId] : undefined
-                                      }
-                                    />
-                                  )}
-                                />
-                              )}
-                            </>
-                          )}
-                        </View>
-
-                        <View style={styles.content}>
-                          <Text style={styles.header}>Points de suivi</Text>
-
-                          {pointsError ? (
-                            <ErrorState message={pointsError} onRetry={retryPoints} />
-                          ) : isTrashView ? (
-                            <Text style={styles.empty}>
-                              Aucun point de suivi dans les éléments supprimés.
+                        {(!isMobile || mobileActiveTab === "tasks") && (
+                          <View style={styles.content}>
+                            <Text style={styles.header}>
+                              {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
                             </Text>
-                          ) : (
-                            <FlatList
-                              data={points}
-                              keyExtractor={(item) => item.id}
-                              ListHeaderComponent={
-                                pointsLoading ? (
+
+                            {sectionsError || todosError ? (
+                              <ErrorState
+                                message={sectionsError ?? todosError ?? ""}
+                                onRetry={() => {
+                                  retrySections();
+                                  retryTodos();
+                                }}
+                              />
+                            ) : (
+                              <>
+                                {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
+
+                                {tasksLoading ? (
                                   <Text style={styles.empty}>Chargement...</Text>
-                                ) : null
-                              }
-                              renderItem={({ item }) => (
-                                <TrackingPointCard
-                                  point={item}
-                                  onOpen={setSelectedPointId}
-                                  onRemove={handleRemovePoint}
-                                />
-                              )}
-                              ListFooterComponent={
-                                <NewTrackingPointForm onSave={handleAddPoint} />
-                              }
-                            />
-                          )}
-                        </View>
+                                ) : todos.length === 0 ? (
+                                  <Text style={styles.empty}>
+                                    {isTrashView
+                                      ? "Aucune tâche terminée."
+                                      : "Aucune tâche pour le moment."}
+                                  </Text>
+                                ) : (
+                                  <FlatList
+                                    data={todos}
+                                    keyExtractor={(item) => item.id}
+                                    renderItem={({ item }) => (
+                                      <TodoItem
+                                        todo={item}
+                                        onToggle={handleToggle}
+                                        onOpen={setSelectedTodoId}
+                                        onRemove={handleRemove}
+                                        onRestore={isTrashView ? handleToggle : undefined}
+                                        sectionName={
+                                          isTrashView ? sectionNameById[item.sectionId] : undefined
+                                        }
+                                      />
+                                    )}
+                                  />
+                                )}
+                              </>
+                            )}
+                          </View>
+                        )}
+
+                        {(!isMobile || mobileActiveTab === "tracking") && (
+                          <View style={styles.content}>
+                            <Text style={styles.header}>Points de suivi</Text>
+
+                            {pointsError ? (
+                              <ErrorState message={pointsError} onRetry={retryPoints} />
+                            ) : isTrashView ? (
+                              <Text style={styles.empty}>
+                                Aucun point de suivi dans les éléments supprimés.
+                              </Text>
+                            ) : (
+                              <FlatList
+                                data={points}
+                                keyExtractor={(item) => item.id}
+                                ListHeaderComponent={
+                                  pointsLoading ? (
+                                    <Text style={styles.empty}>Chargement...</Text>
+                                  ) : null
+                                }
+                                renderItem={({ item }) => (
+                                  <TrackingPointCard
+                                    point={item}
+                                    onOpen={setSelectedPointId}
+                                    onRemove={handleRemovePoint}
+                                  />
+                                )}
+                                ListFooterComponent={
+                                  <NewTrackingPointForm onSave={handleAddPoint} />
+                                }
+                              />
+                            )}
+                          </View>
+                        )}
                       </>
                     )}
-                  </View>
+                    </View>
                 </View>
               </View>
             </View>
@@ -348,10 +393,10 @@ export default function App() {
             {selectedTodo && (
               <>
                 <Pressable
-                  style={styles.backdrop}
+                  style={[styles.backdrop, { zIndex: 60 }]}
                   onPress={() => setSelectedTodoId(undefined)}
                 />
-                <View style={styles.panelContainer}>
+                <View style={[styles.panelContainer, isMobile && styles.panelContainerMobile, { zIndex: 61 }]}>
                   <TaskDetailPanel
                     todo={selectedTodo}
                     onChange={(patch) => handleUpdateTodo(selectedTodo.id, patch)}
@@ -364,10 +409,10 @@ export default function App() {
             {selectedPoint && (
               <>
                 <Pressable
-                  style={styles.backdrop}
+                  style={[styles.backdrop, { zIndex: 60 }]}
                   onPress={() => setSelectedPointId(undefined)}
                 />
-                <View style={styles.panelContainer}>
+                <View style={[styles.panelContainer, isMobile && styles.panelContainerMobile, { zIndex: 61 }]}>
                   <TrackingDetailPanel
                     point={selectedPoint}
                     onChange={(patch) => handleUpdatePoint(selectedPoint.id, patch)}
@@ -379,7 +424,7 @@ export default function App() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
     </LinearGradient>
   );
 }
@@ -456,6 +501,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     backgroundColor: colors.panel,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     padding: 24,
   },
   sidebarToggle: {
@@ -463,7 +510,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
@@ -487,5 +534,48 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 16,
+  },
+  sidebarWrapperMobile: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: colors.surface,
+  },
+  mobileTabs: {
+    flexDirection: "row",
+    marginBottom: 16,
+    borderRadius: 8,
+    backgroundColor: colors.panel,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    padding: 4,
+  },
+  mobileTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  mobileTabActive: {
+    backgroundColor: colors.accent,
+  },
+  mobileTabText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  mobileTabTextActive: {
+    color: colors.textOnBrand,
+  },
+  panelContainerMobile: {
+    top: "20%",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    maxWidth: "100%",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
 });

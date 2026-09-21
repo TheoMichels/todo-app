@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   saveButtonText: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
     fontWeight: "600",
   },
 });

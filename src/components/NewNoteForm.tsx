@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
@@ -8,14 +8,16 @@ type Props = {
 };
 
 export function NewNoteForm({ onSave }: Props) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [isAdding, setIsAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   const reset = () => {
     setTitle("");
     setDescription("");
-    setIsOpen(false);
+    setIsAdding(false);
   };
 
   const handleSave = async () => {
@@ -28,16 +30,16 @@ export function NewNoteForm({ onSave }: Props) {
     }
   };
 
-  if (!isOpen) {
+  if (!isAdding) {
     return (
-      <Pressable style={[styles.trigger, cursorPointer]} onPress={() => setIsOpen(true)}>
+      <Pressable style={[styles.trigger, isMobile && styles.triggerMobile, cursorPointer]} onPress={() => setIsAdding(true)}>
         <Text style={styles.triggerText}>+ Nouvelle note</Text>
       </Pressable>
     );
   }
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isMobile && styles.cardMobile]}>
       <TextInput
         style={styles.titleInput}
         placeholder="Titre"
@@ -83,6 +85,9 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: colors.textMuted,
   },
+  triggerMobile: {
+    width: "100%",
+  },
   card: {
     width: 260,
     borderWidth: 1,
@@ -90,6 +95,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
+  },
+  cardMobile: {
+    width: "100%",
   },
   titleInput: {
     fontSize: 16,
@@ -134,7 +142,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   saveButtonText: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
     fontWeight: "600",
     fontSize: 13,
   },

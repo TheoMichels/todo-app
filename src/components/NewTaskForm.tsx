@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   addButtonText: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
     fontWeight: "600",
   },
   calendarPopover: {

@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   priorityTextSelected: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
   },
   dueDateRow: {
     flexDirection: "row",

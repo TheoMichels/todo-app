@@ -186,6 +186,8 @@ const styles = StyleSheet.create({
     width: 220,
     borderRadius: 16,
     backgroundColor: colors.sidebar,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     padding: 24,
     marginRight: 20,
   },
@@ -221,14 +223,14 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   itemTextSelected: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
   },
   editIcon: {
     fontSize: 14,
     color: colors.textMuted,
   },
   editIconSelected: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
   },
   divider: {
     height: 1,

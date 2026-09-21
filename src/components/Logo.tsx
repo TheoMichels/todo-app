@@ -1,49 +1,27 @@
-import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, Stop } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
+import { colors } from "../theme/colors";
 
 type Props = {
   size?: number;
 };
 
+// Reprend le double chevron de la marque ITS4U : pétrole à gauche, orange à droite.
 export function Logo({ size = 32 }: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120">
-      <Defs>
-        <LinearGradient id="logoOrbitGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <Stop offset="0%" stopColor="#e881c4" />
-          <Stop offset="50%" stopColor="#a35bd0" />
-          <Stop offset="100%" stopColor="#5b3a91" />
-        </LinearGradient>
-      </Defs>
-
-      <Ellipse
-        cx="60"
-        cy="60"
-        rx="48"
-        ry="18"
-        fill="none"
-        stroke="url(#logoOrbitGradient)"
-        strokeWidth={3.5}
-      />
-      <Ellipse
-        cx="60"
-        cy="60"
-        rx="48"
-        ry="18"
-        fill="none"
-        stroke="url(#logoOrbitGradient)"
-        strokeWidth={3.5}
-        rotation={90}
-        origin="60, 60"
-      />
-
-      <Circle cx="60" cy="60" r="13.5" fill="#b356d8" />
       <Path
-        d="M53 60.5 L58 65.5 L68.5 53.5"
+        d="M62 26 L34 60 L62 94"
         fill="none"
-        stroke="#ffffff"
-        strokeWidth={3.4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        stroke={colors.brand}
+        strokeWidth={15}
+        strokeLinejoin="miter"
+      />
+      <Path
+        d="M72 26 L100 60 L72 94"
+        fill="none"
+        stroke={colors.accent}
+        strokeWidth={15}
+        strokeLinejoin="miter"
       />
     </Svg>
   );
