@@ -1,4 +1,4 @@
-import Svg, { Path } from "react-native-svg";
+import Svg, { Ellipse } from "react-native-svg";
 import { colors } from "../theme/colors";
 
 type Props = {
@@ -9,19 +9,25 @@ type Props = {
 export function Logo({ size = 32 }: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120">
-      <Path
-        d="M62 26 L34 60 L62 94"
+      <Ellipse
+        cx="60"
+        cy="60"
+        rx="45"
+        ry="15"
         fill="none"
         stroke={colors.brand}
-        strokeWidth={15}
-        strokeLinejoin="miter"
+        strokeWidth="10"
+        transform="rotate(45, 60, 60)"
       />
-      <Path
-        d="M72 26 L100 60 L72 94"
+      <Ellipse
+        cx="60"
+        cy="60"
+        rx="45"
+        ry="15"
         fill="none"
         stroke={colors.accent}
-        strokeWidth={15}
-        strokeLinejoin="miter"
+        strokeWidth="10"
+        transform="rotate(-45, 60, 60)"
       />
     </Svg>
   );
