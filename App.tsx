@@ -210,7 +210,7 @@ export default function App() {
 
                 <View style={styles.brand}>
                   <Logo size={48} />
-                  <Text style={styles.brandTitle}>Todo bem</Text>
+                  <Text style={styles.brandTitle}>Todo</Text>
                 </View>
 
                 <View style={styles.topBarSpacer} />

@@ -54,7 +54,7 @@ export function Calendar({ value, onSelect }: Props) {
   ];
 
   const goToMonth = (delta: number) => {
-    setViewDate(new Date(year, month + delta, 1));
+    setViewDate((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
   return (
@@ -114,6 +114,7 @@ const CELL_SIZE = 32;
 const styles = StyleSheet.create({
   container: {
     marginTop: 8,
+    width: CELL_SIZE * 7,
   },
   header: {
     flexDirection: "row",
