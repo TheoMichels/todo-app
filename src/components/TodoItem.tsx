@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Todo } from "../types/todo";
-import { colors } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -100,8 +100,13 @@ export function TodoItem({
 const styles = StyleSheet.create({
   row: {
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
+    ...shadows.sm,
   },
   topLine: {
     flexDirection: "row",
@@ -114,8 +119,8 @@ const styles = StyleSheet.create({
   checkboxInner: {
     width: 22,
     height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
     borderColor: colors.textMuted,
     alignItems: "center",
     justifyContent: "center",
@@ -126,14 +131,15 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: colors.textPrimary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "bold",
   },
   titleArea: {
     flex: 1,
   },
   title: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: "400",
     color: colors.textPrimary,
   },
   titleDone: {
@@ -145,8 +151,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 8,
-    marginTop: 6,
-    marginLeft: 34,
+    marginTop: 8,
+    marginLeft: 38,
   },
   badgeGroup: {
     flexDirection: "row",
@@ -155,16 +161,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    backgroundColor: colors.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: colors.panel,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   badgeUrgent: {
     backgroundColor: colors.urgent,
+    borderColor: colors.urgent,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: colors.textPrimary,
   },
@@ -174,8 +183,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   delete: {
-    fontSize: 16,
-    color: colors.danger,
+    fontSize: 18,
+    color: colors.textMuted,
     paddingHorizontal: 8,
   },
 });

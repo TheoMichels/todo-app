@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { NOTES_SECTION_ID, Section, TRASH_SECTION_ID } from "../types/section";
-import { colors } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -123,6 +123,7 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
             selectedId === NOTES_SECTION_ID && styles.itemSelected,
             cursorPointer,
           ]}
+          onSelect={() => onSelect(NOTES_SECTION_ID)}
           onPress={() => onSelect(NOTES_SECTION_ID)}
         >
           <Text
@@ -142,6 +143,7 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
             selectedId === TRASH_SECTION_ID && styles.itemSelected,
             cursorPointer,
           ]}
+          onSelect={() => onSelect(TRASH_SECTION_ID)}
           onPress={() => onSelect(TRASH_SECTION_ID)}
         >
           <Text
@@ -173,7 +175,7 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
           style={[styles.addButton, cursorPointer]}
           onPress={() => setIsAdding(true)}
         >
-          <Text style={styles.addButtonText}>+ Section</Text>
+          <Text style={styles.addButtonText}>+ Nouvelle Section</Text>
         </Pressable>
       )}
     </View>
@@ -183,19 +185,22 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
 const styles = StyleSheet.create({
   sidebar: {
     flex: 1,
-    width: 220,
-    borderRadius: 16,
+    width: 200,
+    borderRadius: 24,
     backgroundColor: colors.sidebar,
+    padding: 16,
+    marginRight: 12,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    padding: 24,
-    marginRight: 20,
+    borderColor: colors.border,
+    ...shadows.sm,
+    ...({ backdropFilter: "blur(24px)" } as any),
   },
   brand: {
-    fontSize: 22,
-    fontWeight: "700",
+    fontSize: 20,
+    fontWeight: "600",
     color: colors.textPrimary,
-    marginBottom: 20,
+    marginBottom: 16,
+    letterSpacing: -0.1,
   },
   list: {
     flexGrow: 1,
@@ -205,20 +210,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   itemSelected: {
     backgroundColor: colors.accent,
+    ...shadows.sm,
   },
   itemPressable: {
     flex: 1,
   },
   itemText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "500",
     color: colors.textSecondary,
   },
@@ -226,7 +232,7 @@ const styles = StyleSheet.create({
     color: colors.textOnBrand,
   },
   editIcon: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textMuted,
   },
   editIconSelected: {
@@ -235,41 +241,44 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: colors.border,
-    marginVertical: 10,
+    marginVertical: 12,
+    marginHorizontal: 8,
   },
   trashText: {
     color: colors.textMuted,
   },
   addButton: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: "dashed",
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
   },
   addButtonText: {
     fontSize: 14,
     fontWeight: "500",
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   addInput: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.accent,
+    backgroundColor: colors.surface,
     color: colors.textPrimary,
     fontSize: 14,
   },
   editInput: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: colors.accent,
+    backgroundColor: colors.surface,
     color: colors.textPrimary,
-    fontSize: 15,
-    marginBottom: 6,
+    fontSize: 14,
+    marginBottom: 4,
   },
 });

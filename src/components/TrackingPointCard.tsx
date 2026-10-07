@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { TrackingPoint } from "../types/trackingPoint";
-import { colors } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -64,13 +64,14 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 8,
     gap: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
+    ...shadows.sm,
   },
   textArea: {
     flex: 1,
@@ -82,38 +83,41 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     rowGap: 4,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   title: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "500",
     color: colors.textPrimary,
     flexShrink: 1,
   },
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
     backgroundColor: colors.overlayPanel,
     marginLeft: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   badgeText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "600",
     color: colors.textPrimary,
   },
   line: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
-    marginTop: 2,
+    marginTop: 4,
+    lineHeight: 22,
   },
   lineLabel: {
     color: colors.textMuted,
     fontWeight: "600",
   },
   delete: {
-    fontSize: 16,
-    color: colors.danger,
+    fontSize: 18,
+    color: colors.textMuted,
     paddingHorizontal: 4,
   },
 });

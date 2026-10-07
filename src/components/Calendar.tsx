@@ -109,7 +109,7 @@ export function Calendar({ value, onSelect }: Props) {
   );
 }
 
-const CELL_SIZE = 32;
+const CELL_SIZE = 36;
 
 const styles = StyleSheet.create({
   container: {
@@ -120,27 +120,28 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   nav: {
-    fontSize: 18,
+    fontSize: 20,
     color: colors.textSecondary,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
   },
   monthLabel: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     color: colors.textPrimary,
   },
   weekdayRow: {
     flexDirection: "row",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   weekdayLabel: {
     width: CELL_SIZE,
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textMuted,
+    fontWeight: "500",
   },
   grid: {
     flexDirection: "row",
@@ -164,11 +165,12 @@ const styles = StyleSheet.create({
     borderColor: colors.accent,
   },
   dayText: {
-    fontSize: 13,
+    fontSize: 14,
     color: colors.textSecondary,
+    fontWeight: "500",
   },
   dayTextSelected: {
-    color: colors.textPrimary,
+    color: colors.textOnBrand,
     fontWeight: "700",
   },
 });

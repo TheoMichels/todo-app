@@ -1,9 +1,8 @@
-// Charte ITS4U : pétrole profond #072939 et orange #E85315, sur des surfaces majoritairement blanches.
 export const gradient = {
-  colors: ["#F5F8FA", "#EDF2F5", "#E3EAEF"] as const,
-  locations: [0, 0.55, 1] as const,
-  start: { x: 0.1, y: 0 },
-  end: { x: 0.9, y: 1 },
+  colors: ["#EAD6EE", "#A0F1EA", "#F5E6E8", "#D5E1FA"] as const,
+  locations: [0, 0.3, 0.7, 1] as const,
+  start: { x: 0.0, y: 0.0 },
+  end: { x: 1.0, y: 1.0 },
 };
 
 export const colors = {
@@ -17,17 +16,40 @@ export const colors = {
   textMuted: "#8B99A3",
   textOnBrand: "#FFFFFF",
 
-  panel: "#FFFFFF",
-  sidebar: "#FFFFFF",
-  surface: "#F5F8FA",
-  border: "#E3EAEF",
-  borderStrong: "#CCD9E0",
+  panel: "rgba(255, 255, 255, 0.55)",
+  sidebar: "rgba(255, 255, 255, 0.45)",
+  surface: "rgba(255, 255, 255, 0.5)",
+  border: "rgba(255, 255, 255, 0.4)",
+  borderStrong: "rgba(255, 255, 255, 0.7)",
 
   danger: "#C0392B",
-  urgent: "#C0392B", // Mapped to danger for the todo app
+  urgent: "#C0392B",
   positive: "#1F7A5C",
 
-  // Todo app specific
-  overlayPanel: "#FFFFFF",
-  backdrop: "rgba(7, 41, 57, 0.4)", // transparent brand color
+  overlayPanel: "rgba(255, 255, 255, 0.75)",
+  backdrop: "rgba(7, 41, 57, 0.2)",
+};
+
+export const shadows = {
+  sm: {
+    shadowColor: "#8BA3C0",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 4,
+  },
+  md: {
+    shadowColor: "#8BA3C0",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2,
+    shadowRadius: 32,
+    elevation: 8,
+  },
+  lg: {
+    shadowColor: "#8BA3C0",
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.25,
+    shadowRadius: 48,
+    elevation: 12,
+  },
 };

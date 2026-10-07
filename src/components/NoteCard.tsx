@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { Note } from "../types/note";
-import { colors } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -85,12 +85,13 @@ export function NoteCard({ note, onUpdate, onRemove }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    width: 260,
-    borderWidth: 1,
-    borderColor: colors.border,
+    width: 240,
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
+    ...shadows.sm,
   },
   cardMobile: {
     width: "100%",
@@ -100,51 +101,52 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 8,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   title: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "500",
     color: colors.textPrimary,
   },
   icons: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
   },
   icon: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.textMuted,
   },
   deleteIcon: {
     color: colors.danger,
   },
   description: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textSecondary,
+    lineHeight: 22,
   },
   titleInput: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "600",
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.overlayPanel,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 8,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
   },
   descriptionInput: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.overlayPanel,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 80,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 100,
     textAlignVertical: "top",
   },
   actions: {
@@ -152,22 +154,22 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     alignItems: "center",
     gap: 16,
-    marginTop: 12,
+    marginTop: 16,
   },
   cancelText: {
-    fontSize: 14,
+    fontSize: 15,
     color: colors.textMuted,
     fontWeight: "500",
   },
   saveButton: {
     backgroundColor: colors.accent,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   saveButtonText: {
     color: colors.textOnBrand,
     fontWeight: "600",
-    fontSize: 13,
+    fontSize: 14,
   },
 });

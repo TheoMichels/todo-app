@@ -31,12 +31,12 @@ import { NewNoteForm } from "./src/components/NewNoteForm";
 import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
 import { Logo } from "./src/components/Logo";
-import { colors, gradient } from "./src/theme/colors";
+import { colors, gradient, shadows } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
 import { NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
 
-// Matches Sidebar's own width (220) + marginRight (20).
-const SIDEBAR_TOTAL_WIDTH = 240;
+// Matches Sidebar's own width (200) + marginRight (12).
+const SIDEBAR_TOTAL_WIDTH = 212;
 
 export default function App() {
   const {
@@ -442,28 +442,28 @@ const styles = StyleSheet.create({
   },
   pageContent: {
     flex: 1,
-    padding: 20,
+    padding: 12,
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   brand: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 14,
+    gap: 10,
   },
   brandTitle: {
-    fontSize: 30,
-    fontWeight: "800",
+    fontSize: 22,
+    fontWeight: "600",
     color: colors.textPrimary,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   topBarSpacer: {
-    width: 36,
+    width: 32,
   },
   layout: {
     flex: 1,
@@ -486,44 +486,46 @@ const styles = StyleSheet.create({
   },
   panelContainer: {
     position: "absolute",
-    top: 20,
-    right: 20,
-    bottom: 20,
+    top: 12,
+    right: 12,
+    bottom: 12,
     width: 320,
     maxWidth: "90%",
   },
   panelsRow: {
     flex: 1,
     flexDirection: "row",
-    gap: 20,
+    gap: 12,
   },
   content: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 24,
     backgroundColor: colors.panel,
+    padding: 20,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    padding: 24,
+    borderColor: colors.border,
+    ...shadows.sm,
+    ...({ backdropFilter: "blur(24px)" } as any),
   },
   sidebarToggle: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.panel,
     alignItems: "center",
     justifyContent: "center",
+    ...shadows.sm,
   },
   sidebarToggleIcon: {
-    fontSize: 16,
+    fontSize: 18,
     color: colors.textSecondary,
   },
   header: {
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: 20,
+    fontSize: 20,
+    fontWeight: "600",
+    marginBottom: 16,
     color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   empty: {
     textAlign: "center",
@@ -540,28 +542,27 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: colors.surface,
+    backgroundColor: "transparent",
   },
   mobileTabs: {
     flexDirection: "row",
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: colors.panel,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    padding: 4,
+    padding: 6,
+    ...shadows.sm,
   },
   mobileTab: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
-    borderRadius: 6,
+    borderRadius: 10,
   },
   mobileTabActive: {
     backgroundColor: colors.accent,
   },
   mobileTabText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     color: colors.textSecondary,
   },
@@ -575,7 +576,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: "100%",
     maxWidth: "100%",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    ...shadows.lg,
   },
 });
