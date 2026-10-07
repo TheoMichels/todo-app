@@ -8,8 +8,8 @@ export const gradient = {
 export const colors = {
   brand: "#072939",
   brandMuted: "#1D4E60",
-  accent: "#E85315",
-  accentSoft: "#FBAE40",
+  accent: "#5E5CE6",
+  accentSoft: "#7D7AFF",
 
   textPrimary: "#072939",
   textSecondary: "#50646F",

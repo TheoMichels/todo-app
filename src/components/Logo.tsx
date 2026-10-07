@@ -5,7 +5,7 @@ type Props = {
   size?: number;
 };
 
-// Reprend le double chevron de la marque ITS4U : pétrole à gauche, orange à droite.
+// Reprend le double chevron de la marque ITS4U : pétrole à gauche, indigo à droite.
 export function Logo({ size = 32 }: Props) {
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120">
