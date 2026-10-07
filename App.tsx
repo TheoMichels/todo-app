@@ -71,28 +71,18 @@ export default function App() {
   } = useTodos(selectedSectionId);
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const sidebarAnimMobile = useRef(new Animated.Value(1)).current;
   const sidebarAnimDesktop = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (isMobile) {
-      Animated.timing(sidebarAnimMobile, {
-        toValue: sidebarVisible ? 1 : 0,
-        duration: 250,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-      sidebarAnimDesktop.setValue(sidebarVisible ? 1 : 0);
-    } else {
+    if (!isMobile) {
       Animated.timing(sidebarAnimDesktop, {
         toValue: sidebarVisible ? 1 : 0,
         duration: 250,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }).start();
-      sidebarAnimMobile.setValue(sidebarVisible ? 1 : 0);
     }
-  }, [sidebarVisible, isMobile, sidebarAnimMobile, sidebarAnimDesktop]);
+  }, [sidebarVisible, isMobile, sidebarAnimDesktop]);
 
   // Ensure sidebar is closed when switching to mobile, or initialized properly.
   useEffect(() => {
@@ -198,6 +188,8 @@ export default function App() {
     <Sidebar
       sections={sections}
       selectedId={selectedSectionId}
+      isMobile={isMobile}
+      onClose={isMobile ? () => setSidebarVisible(false) : undefined}
       onSelect={(id) => {
         setSelectedSectionId(id);
         setSelectedTodoId(undefined);
@@ -222,44 +214,15 @@ export default function App() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.stage}>
-            {isMobile && (
+            {isMobile && sidebarVisible && (
               <>
-                <Animated.View
-                  style={[
-                    styles.backdrop,
-                    {
-                      zIndex: 40,
-                      opacity: sidebarAnimMobile,
-                    },
-                  ]}
-                  pointerEvents={sidebarVisible ? "auto" : "none"}
-                >
-                  <Pressable
-                    style={StyleSheet.absoluteFill}
-                    onPress={() => setSidebarVisible(false)}
-                  />
-                </Animated.View>
-                <Animated.View
-                  pointerEvents="box-none"
-                  style={[
-                    styles.sidebarWrapper,
-                    styles.sidebarWrapperMobile,
-                    {
-                      width: SIDEBAR_TOTAL_WIDTH,
-                      transform: [
-                        {
-                          translateX: sidebarAnimMobile.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [-SIDEBAR_TOTAL_WIDTH, 0],
-                          }),
-                        },
-                      ],
-                      zIndex: 50,
-                    }
-                  ]}
-                >
+                <Pressable
+                  style={[styles.backdrop, { zIndex: 60 }]}
+                  onPress={() => setSidebarVisible(false)}
+                />
+                <View style={[styles.panelContainer, styles.panelContainerMobile, { zIndex: 61 }]}>
                   {sidebarElement}
-                </Animated.View>
+                </View>
               </>
             )}
             <View style={styles.pageContent}>
@@ -586,13 +549,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 16,
-  },
-  sidebarWrapperMobile: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "transparent",
   },
   mobileTabs: {
     flexDirection: "row",

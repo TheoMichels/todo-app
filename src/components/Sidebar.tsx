@@ -17,9 +17,11 @@ type Props = {
   onSelect: (id: string) => void;
   onAdd: (name: string) => void;
   onRename: (id: string, name: string) => void;
+  isMobile?: boolean;
+  onClose?: () => void;
 };
 
-export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Props) {
+export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename, isMobile, onClose }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -45,8 +47,15 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
   };
 
   return (
-    <View style={styles.sidebar}>
-      <Text style={styles.brand}>Mes tâches</Text>
+    <View style={[styles.sidebar, isMobile && styles.sidebarMobile]}>
+      <View style={styles.headerRow}>
+        <Text style={styles.brand}>Mes tâches</Text>
+        {isMobile && onClose && (
+          <Pressable onPress={onClose} hitSlop={8}>
+            <Text style={styles.close}>✕</Text>
+          </Pressable>
+        )}
+      </View>
 
       <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
         {sections.map((section) => {
@@ -69,7 +78,7 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
           // react-native-web forwards onMouseEnter/onMouseLeave straight to the
           // DOM node, but RN's official View types don't declare them (web-only
           // runtime behavior), hence the loosely-typed spread.
-          const hoverProps = {
+          const hoverProps = isMobile ? {} : {
             onMouseEnter: () => setHoveredId(section.id),
             onMouseLeave: () =>
               setHoveredId((current) => (current === section.id ? null : current)),
@@ -193,12 +202,34 @@ const styles = StyleSheet.create({
     ...shadows.sm,
     ...({ backdropFilter: "blur(24px)" } as any),
   },
+  sidebarMobile: {
+    width: "100%",
+    marginRight: 0,
+    backgroundColor: colors.overlayPanel || colors.sidebar,
+    borderColor: colors.borderStrong || colors.border,
+    shadowColor: "#93A5CE",
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.2,
+    shadowRadius: 32,
+    elevation: 16,
+    ...({ backdropFilter: "blur(32px)" } as any),
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
   brand: {
     fontSize: 20,
     fontWeight: "600",
     color: colors.textPrimary,
-    marginBottom: 16,
     letterSpacing: -0.1,
+  },
+  close: {
+    fontSize: 16,
+    color: colors.textMuted,
+    paddingHorizontal: 4,
   },
   list: {
     flexGrow: 1,
