@@ -123,7 +123,6 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
             selectedId === NOTES_SECTION_ID && styles.itemSelected,
             cursorPointer,
           ]}
-          onSelect={() => onSelect(NOTES_SECTION_ID)}
           onPress={() => onSelect(NOTES_SECTION_ID)}
         >
           <Text
@@ -143,7 +142,6 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename }: Pro
             selectedId === TRASH_SECTION_ID && styles.itemSelected,
             cursorPointer,
           ]}
-          onSelect={() => onSelect(TRASH_SECTION_ID)}
           onPress={() => onSelect(TRASH_SECTION_ID)}
         >
           <Text

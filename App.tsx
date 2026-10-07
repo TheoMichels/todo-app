@@ -71,18 +71,28 @@ export default function App() {
   } = useTodos(selectedSectionId);
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const sidebarAnim = useRef(new Animated.Value(1)).current;
+  const sidebarAnimMobile = useRef(new Animated.Value(1)).current;
+  const sidebarAnimDesktop = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // If mobile, default sidebar to hidden; if desktop, default to visible.
-    // However, since we might switch dynamically, let's handle the animation.
-    Animated.timing(sidebarAnim, {
-      toValue: sidebarVisible ? 1 : 0,
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [sidebarVisible, sidebarAnim]);
+    if (isMobile) {
+      Animated.timing(sidebarAnimMobile, {
+        toValue: sidebarVisible ? 1 : 0,
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+      sidebarAnimDesktop.setValue(sidebarVisible ? 1 : 0);
+    } else {
+      Animated.timing(sidebarAnimDesktop, {
+        toValue: sidebarVisible ? 1 : 0,
+        duration: 250,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: false,
+      }).start();
+      sidebarAnimMobile.setValue(sidebarVisible ? 1 : 0);
+    }
+  }, [sidebarVisible, isMobile, sidebarAnimMobile, sidebarAnimDesktop]);
 
   // Ensure sidebar is closed when switching to mobile, or initialized properly.
   useEffect(() => {
@@ -184,6 +194,20 @@ export default function App() {
     sections.map((s) => [s.id, s.name])
   );
 
+  const sidebarElement = (
+    <Sidebar
+      sections={sections}
+      selectedId={selectedSectionId}
+      onSelect={(id) => {
+        setSelectedSectionId(id);
+        setSelectedTodoId(undefined);
+        if (isMobile) setSidebarVisible(false);
+      }}
+      onAdd={handleAddSection}
+      onRename={handleRenameSection}
+    />
+  );
+
   return (
     <LinearGradient
       colors={gradient.colors}
@@ -198,6 +222,46 @@ export default function App() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.stage}>
+            {isMobile && (
+              <>
+                <Animated.View
+                  style={[
+                    styles.backdrop,
+                    {
+                      zIndex: 40,
+                      opacity: sidebarAnimMobile,
+                    },
+                  ]}
+                  pointerEvents={sidebarVisible ? "auto" : "none"}
+                >
+                  <Pressable
+                    style={StyleSheet.absoluteFill}
+                    onPress={() => setSidebarVisible(false)}
+                  />
+                </Animated.View>
+                <Animated.View
+                  pointerEvents="box-none"
+                  style={[
+                    styles.sidebarWrapper,
+                    styles.sidebarWrapperMobile,
+                    {
+                      width: SIDEBAR_TOTAL_WIDTH,
+                      transform: [
+                        {
+                          translateX: sidebarAnimMobile.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [-SIDEBAR_TOTAL_WIDTH, 0],
+                          }),
+                        },
+                      ],
+                      zIndex: 50,
+                    }
+                  ]}
+                >
+                  {sidebarElement}
+                </Animated.View>
+              </>
+            )}
             <View style={styles.pageContent}>
               <View style={styles.topBar}>
                 <Pressable
@@ -217,38 +281,23 @@ export default function App() {
               </View>
 
               <View style={styles.layout}>
-                {isMobile && sidebarVisible && (
-                  <Pressable
-                    style={[styles.backdrop, { zIndex: 40 }]}
-                    onPress={() => setSidebarVisible(false)}
-                  />
+                {!isMobile && (
+                  <Animated.View
+                    style={[
+                      styles.sidebarWrapper,
+                      {
+                        width: sidebarAnimDesktop.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, SIDEBAR_TOTAL_WIDTH],
+                        }),
+                        opacity: sidebarAnimDesktop,
+                        zIndex: 1,
+                      },
+                    ]}
+                  >
+                    {sidebarElement}
+                  </Animated.View>
                 )}
-                <Animated.View
-                  style={[
-                    styles.sidebarWrapper,
-                    isMobile && styles.sidebarWrapperMobile,
-                    {
-                      width: sidebarAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0, isMobile ? 300 : SIDEBAR_TOTAL_WIDTH],
-                      }),
-                      opacity: sidebarAnim,
-                      zIndex: isMobile ? 50 : 1,
-                    },
-                  ]}
-                >
-                  <Sidebar
-                    sections={sections}
-                    selectedId={selectedSectionId}
-                    onSelect={(id) => {
-                      setSelectedSectionId(id);
-                      setSelectedTodoId(undefined);
-                      if (isMobile) setSidebarVisible(false);
-                    }}
-                    onAdd={handleAddSection}
-                    onRename={handleRenameSection}
-                  />
-                </Animated.View>
 
                 <View style={styles.mainArea}>
                   {actionError && (
@@ -483,6 +532,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: colors.backdrop,
+    ...({ backdropFilter: "blur(4px)" } as any),
   },
   panelContainer: {
     position: "absolute",
