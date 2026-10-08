@@ -8,7 +8,7 @@ type Props = {
 // Reprend le "check" géométrique de la nouvelle icône, avec un dégradé pétrole vers indigo
 export function Logo({ size = 32 }: Props) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Svg width={size} height={size} viewBox="10 20 100 85">
       <Defs>
         <LinearGradient id="checkGradient" x1="0%" y1="50%" x2="100%" y2="50%">
           <Stop offset="0%" stopColor={colors.brand} />
