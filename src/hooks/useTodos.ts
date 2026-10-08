@@ -48,24 +48,47 @@ export function useTodos(sectionId: string | undefined) {
     async (id: string) => {
       const current = todos.find((t) => t.id === id);
       if (!current) return;
-      const updated = await todoRepository.update(id, { done: !current.done });
-      setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      
+      const newDone = !current.done;
+      // Optimistic update
+      setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: newDone } : t)));
+      
+      try {
+        const updated = await todoRepository.update(id, { done: newDone });
+        setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      } catch (e) {
+        load();
+      }
     },
-    [todos]
+    [todos, load]
   );
 
   const updateTodo = useCallback(
     async (id: string, patch: Partial<Pick<Todo, "title" | "priority" | "dueDate">>) => {
-      const updated = await todoRepository.update(id, patch);
-      setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      // Optimistic update
+      setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+      
+      try {
+        const updated = await todoRepository.update(id, patch);
+        setTodos((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      } catch (e) {
+        load();
+      }
     },
-    []
+    [load]
   );
 
   const removeTodo = useCallback(async (id: string) => {
-    await todoRepository.remove(id);
+    const previousTodos = todos;
+    // Optimistic update
     setTodos((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+    
+    try {
+      await todoRepository.remove(id);
+    } catch (e) {
+      setTodos(previousTodos);
+    }
+  }, [todos]);
 
   const sectionTodos = useMemo(() => {
     const filtered =
