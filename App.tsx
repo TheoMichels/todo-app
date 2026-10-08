@@ -314,7 +314,7 @@ export default function App() {
                     ) : (
                       <>
                         {(!isMobile || mobileActiveTab === "tasks") && (
-                          <View style={styles.content}>
+                          <View style={[styles.content, !isMobile && { flex: 70 }]}>
                             <Text style={styles.header}>
                               {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
                             </Text>
@@ -363,7 +363,7 @@ export default function App() {
                         )}
 
                         {(!isMobile || mobileActiveTab === "tracking") && (
-                          <View style={styles.content}>
+                          <View style={[styles.content, !isMobile && { flex: 30 }]}>
                             <Text style={styles.header}>Points de suivi</Text>
 
                             {pointsError ? (

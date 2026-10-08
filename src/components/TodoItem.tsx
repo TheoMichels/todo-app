@@ -1,7 +1,15 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, Animated, LayoutAnimation, Platform, UIManager } from "react-native";
+import { useEffect, useRef, useState } from "react";
 import { Todo } from "../types/todo";
 import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type Props = {
   todo: Todo;
@@ -29,16 +37,58 @@ export function TodoItem({
 }: Props) {
   const hasBadges = todo.priority === "urgent" || !!todo.dueDate || !!sectionName;
 
+  const [isChecked, setIsChecked] = useState(todo.done);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const opacityAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Sync state if it changes externally
+  useEffect(() => {
+    if (!isAnimating) {
+      setIsChecked(todo.done);
+      opacityAnim.setValue(1);
+      scaleAnim.setValue(1);
+    }
+  }, [todo.done, isAnimating, opacityAnim, scaleAnim]);
+
+  const handleToggle = () => {
+    if (isAnimating) return;
+
+    setIsChecked(!todo.done);
+    setIsAnimating(true);
+
+    Animated.sequence([
+      Animated.delay(200), // Laisser le temps de voir la checkbox cochée
+      Animated.parallel([
+        Animated.timing(opacityAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.9,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      // Animer la disparition de la liste (Android/iOS)
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      onToggle(todo.id);
+    });
+  };
+
   return (
-    <View style={styles.row}>
+    <Animated.View style={[styles.row, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.topLine}>
         <Pressable
           style={[styles.checkbox, cursorPointer]}
-          onPress={() => onToggle(todo.id)}
+          onPress={handleToggle}
           hitSlop={8}
         >
-          <View style={[styles.checkboxInner, todo.done && styles.checkboxDone]}>
-            {todo.done && <Text style={styles.checkmark}>✓</Text>}
+          <View style={[styles.checkboxInner, isChecked && styles.checkboxDone]}>
+            {isChecked && <Text style={styles.checkmark}>✓</Text>}
           </View>
         </Pressable>
 
@@ -46,7 +96,7 @@ export function TodoItem({
           style={[styles.titleArea, cursorPointer]}
           onPress={() => onOpen(todo.id)}
         >
-          <Text style={[styles.title, todo.done && styles.titleDone]}>
+          <Text style={[styles.title, isChecked && styles.titleDone]}>
             {todo.title}
           </Text>
         </Pressable>
@@ -93,7 +143,7 @@ export function TodoItem({
           )}
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
