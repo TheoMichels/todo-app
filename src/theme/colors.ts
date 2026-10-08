@@ -31,25 +31,7 @@ export const colors = {
 };
 
 export const shadows = {
-  sm: {
-    shadowColor: "#8BA3C0",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 4,
-  },
-  md: {
-    shadowColor: "#8BA3C0",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
-    elevation: 8,
-  },
-  lg: {
-    shadowColor: "#8BA3C0",
-    shadowOffset: { width: 0, height: 24 },
-    shadowOpacity: 0.25,
-    shadowRadius: 48,
-    elevation: 12,
-  },
+  sm: {},
+  md: {},
+  lg: {},
 };

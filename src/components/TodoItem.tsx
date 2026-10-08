@@ -18,14 +18,9 @@ type Props = {
   onRemove: (id: string) => void;
   onRestore?: (id: string) => void;
   sectionName?: string;
+  drag?: () => void;
+  isActive?: boolean;
 };
-
-function formatDueDate(dateMs: number) {
-  return new Date(dateMs).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-  });
-}
 
 export function TodoItem({
   todo,
@@ -34,9 +29,9 @@ export function TodoItem({
   onRemove,
   onRestore,
   sectionName,
+  drag,
+  isActive,
 }: Props) {
-  const hasBadges = todo.priority === "urgent" || !!todo.dueDate || !!sectionName;
-
   const [isChecked, setIsChecked] = useState(todo.done);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -80,57 +75,52 @@ export function TodoItem({
   };
 
   return (
-    <Animated.View style={[styles.row, { opacity: opacityAnim, transform: [{ scale: scaleAnim }] }]}>
-      <View style={styles.topLine}>
-        <Pressable
-          style={[styles.checkbox, cursorPointer]}
-          onPress={handleToggle}
-          hitSlop={8}
-        >
-          <View style={[styles.checkboxInner, isChecked && styles.checkboxDone]}>
-            {isChecked && <Text style={styles.checkmark}>✓</Text>}
-          </View>
-        </Pressable>
+    <Animated.View style={{ opacity: opacityAnim, transform: [{ scale: scaleAnim }, { scale: isActive ? 1.01 : 1 }] }}>
+      <View style={[styles.row, isActive && styles.rowActive]}>
+        <View style={styles.topLine}>
+          {drag && (
+            <Pressable
+              style={[styles.dragHandle, cursorPointer]}
+              onPressIn={drag}
+              hitSlop={8}
+            >
+              <Text style={styles.dragIcon}>☰</Text>
+            </Pressable>
+          )}
 
-        <Pressable
-          style={[styles.titleArea, cursorPointer]}
-          onPress={() => onOpen(todo.id)}
-        >
-          <Text style={[styles.title, isChecked && styles.titleDone]}>
-            {todo.title}
-          </Text>
-        </Pressable>
+          <Pressable
+            style={[styles.checkbox, cursorPointer]}
+            onPress={handleToggle}
+            hitSlop={8}
+          >
+            <View style={[styles.checkboxInner, isChecked && styles.checkboxDone]}>
+              {isChecked && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+          </Pressable>
 
-        <Pressable
-          style={cursorPointer}
-          onPress={() => onRemove(todo.id)}
-          hitSlop={8}
-        >
-          <Text style={styles.delete}>✕</Text>
-        </Pressable>
-      </View>
+          <Pressable
+            style={[styles.titleArea, cursorPointer]}
+            onPress={() => onOpen(todo.id)}
+          >
+            <Text style={[styles.title, isChecked && styles.titleDone]}>
+              {todo.title}
+            </Text>
+          </Pressable>
 
-      {(hasBadges || onRestore) && (
-        <View style={styles.badgeRow}>
-          <View style={styles.badgeGroup}>
-            {sectionName && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{sectionName}</Text>
-              </View>
-            )}
-            {todo.priority === "urgent" && (
-              <View style={[styles.badge, styles.badgeUrgent]}>
-                <Text style={styles.badgeText}>Urgent</Text>
-              </View>
-            )}
-            {todo.dueDate && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {formatDueDate(todo.dueDate)}
-                </Text>
-              </View>
-            )}
-          </View>
+          {(sectionName || todo.priority === "urgent") && (
+            <View style={styles.badgeGroup}>
+              {sectionName && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{sectionName}</Text>
+                </View>
+              )}
+              {todo.priority === "urgent" && (
+                <View style={[styles.badge, styles.badgeUrgent]}>
+                  <Text style={styles.badgeText}>Urgent</Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {onRestore && (
             <Pressable
@@ -141,8 +131,16 @@ export function TodoItem({
               <Text style={styles.restore}>↺</Text>
             </Pressable>
           )}
+
+          <Pressable
+            style={cursorPointer}
+            onPress={() => onRemove(todo.id)}
+            hitSlop={8}
+          >
+            <Text style={styles.delete}>✕</Text>
+          </Pressable>
         </View>
-      )}
+      </View>
     </Animated.View>
   );
 }
@@ -158,10 +156,23 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.4)",
     ...shadows.sm,
   },
+  rowActive: {
+    ...shadows.md,
+    backgroundColor: colors.overlayPanel,
+    borderColor: colors.border,
+  },
   topLine: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  dragHandle: {
+    padding: 4,
+    marginLeft: -4,
+  },
+  dragIcon: {
+    color: colors.textMuted,
+    fontSize: 18,
   },
   checkbox: {
     padding: 2,
@@ -195,14 +206,6 @@ const styles = StyleSheet.create({
   titleDone: {
     textDecorationLine: "line-through",
     color: colors.textMuted,
-  },
-  badgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    marginTop: 8,
-    marginLeft: 38,
   },
   badgeGroup: {
     flexDirection: "row",

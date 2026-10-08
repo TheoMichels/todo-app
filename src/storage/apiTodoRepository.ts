@@ -15,13 +15,14 @@ export const apiTodoRepository: TodoRepository = {
   },
   async create(input) {
     const all = await store.loadLocal();
+    const maxOrder = all.reduce((max, t) => Math.max(max, t.order ?? 0), 0);
     const newTodo: Todo = {
       id: Math.random().toString(36).substring(2, 9),
       sectionId: input.sectionId,
       title: input.title,
       done: false,
       priority: input.priority ?? "standard",
-      dueDate: input.dueDate ?? null,
+      order: maxOrder + 1,
       createdAt: Date.now(),
     };
     all.push(newTodo);
@@ -41,6 +42,17 @@ export const apiTodoRepository: TodoRepository = {
   async remove(id) {
     let all = await store.loadLocal();
     all = all.filter(t => t.id !== id);
+    await store.saveAll(all);
+  },
+  async reorder(ids) {
+    const all = await store.loadLocal();
+    // We only reorder the items provided in the list by assigning them consecutive orders
+    for (let i = 0; i < ids.length; i++) {
+      const item = all.find(t => t.id === ids[i]);
+      if (item) {
+        item.order = i;
+      }
+    }
     await store.saveAll(all);
   },
 };

@@ -3,36 +3,24 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Priority } from "../types/todo";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
-import { Calendar } from "./Calendar";
 
 type Props = {
   onAdd: (
     title: string,
-    options: { priority: Priority; dueDate: number | null }
+    options: { priority: Priority }
   ) => Promise<void>;
 };
-
-function formatDueDate(dateMs: number) {
-  return new Date(dateMs).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-  });
-}
 
 export function NewTaskForm({ onAdd }: Props) {
   const [title, setTitle] = useState("");
   const [urgent, setUrgent] = useState(false);
-  const [dueDate, setDueDate] = useState<number | null>(null);
-  const [showCalendar, setShowCalendar] = useState(false);
 
   const handleAdd = async () => {
     if (!title.trim()) return;
     try {
-      await onAdd(title, { priority: urgent ? "urgent" : "standard", dueDate });
+      await onAdd(title, { priority: urgent ? "urgent" : "standard" });
       setTitle("");
       setUrgent(false);
-      setDueDate(null);
-      setShowCalendar(false);
     } catch {
       // Surfaced by the parent's error banner; keep the form filled so nothing is lost.
     }
@@ -63,33 +51,10 @@ export function NewTaskForm({ onAdd }: Props) {
           </Text>
         </Pressable>
 
-        <Pressable
-          style={[styles.dueDateButton, dueDate != null && styles.dueDateButtonActive, cursorPointer]}
-          onPress={() => setShowCalendar((v) => !v)}
-        >
-          <Text
-            style={[styles.dueDateText, dueDate != null && styles.dueDateTextActive]}
-          >
-            {dueDate != null ? formatDueDate(dueDate) : "+ Échéance"}
-          </Text>
-        </Pressable>
-
         <Pressable style={[styles.addButton, cursorPointer]} onPress={handleAdd}>
           <Text style={styles.addButtonText}>Ajouter</Text>
         </Pressable>
       </View>
-
-      {showCalendar && (
-        <View style={styles.calendarPopover}>
-          <Calendar
-            value={dueDate}
-            onSelect={(dateMs) => {
-              setDueDate(dateMs);
-              setShowCalendar(false);
-            }}
-          />
-        </View>
-      )}
     </View>
   );
 }
@@ -158,27 +123,10 @@ const styles = StyleSheet.create({
     color: colors.urgent,
     fontWeight: "600",
   },
-  dueDateButton: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  dueDateButtonActive: {
-    borderColor: colors.accent,
-    backgroundColor: `${colors.accent}10`,
-  },
-  dueDateText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: colors.textSecondary,
-  },
-  dueDateTextActive: {
-    color: colors.accent,
-    fontWeight: "600",
-  },
+
+
+
+
   addButton: {
     backgroundColor: colors.accent,
     borderRadius: 12,
@@ -191,13 +139,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 15,
   },
-  calendarPopover: {
-    marginTop: 12,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.panel,
-    alignSelf: "flex-start",
-  },
+
 });

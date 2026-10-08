@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import {
   Animated,
   Easing,
@@ -38,6 +40,15 @@ import { NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
 // Matches Sidebar's own width (200) + marginRight (12).
 const SIDEBAR_TOTAL_WIDTH = 212;
 
+const snapAnimationConfig = {
+  damping: 20,
+  mass: 0.01,
+  stiffness: 1000,
+  overshootClamping: true,
+  restSpeedThreshold: 10,
+  restDisplacementThreshold: 10,
+};
+
 export default function App() {
   const {
     sections,
@@ -68,6 +79,7 @@ export default function App() {
     toggleTodo,
     updateTodo,
     removeTodo,
+    reorderTodos,
   } = useTodos(selectedSectionId);
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -101,6 +113,7 @@ export default function App() {
     addPoint,
     updatePoint,
     removePoint,
+    reorderPoints,
   } = useTrackingPoints(selectedSectionId);
   const [selectedPointId, setSelectedPointId] = useState<string>();
 
@@ -201,6 +214,7 @@ export default function App() {
   );
 
   return (
+    <GestureHandlerRootView style={styles.root}>
     <LinearGradient
       colors={gradient.colors}
       locations={gradient.locations}
@@ -340,20 +354,26 @@ export default function App() {
                                       : "Aucune tâche pour le moment."}
                                   </Text>
                                 ) : (
-                                  <FlatList
+                                  <DraggableFlatList
                                     data={todos}
-                                    keyExtractor={(item) => item.id}
-                                    renderItem={({ item }) => (
-                                      <TodoItem
-                                        todo={item}
-                                        onToggle={handleToggle}
-                                        onOpen={setSelectedTodoId}
-                                        onRemove={handleRemove}
-                                        onRestore={isTrashView ? handleToggle : undefined}
-                                        sectionName={
-                                          isTrashView ? sectionNameById[item.sectionId] : undefined
-                                        }
-                                      />
+                                    keyExtractor={(item: any) => item.id}
+                                    onDragEnd={({ data }: any) => reorderTodos(data.map((d: any) => d.id))}
+                                    animationConfig={snapAnimationConfig}
+                                    renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
+                                      <ScaleDecorator activeScale={1.01}>
+                                        <TodoItem
+                                          todo={item}
+                                          onToggle={handleToggle}
+                                          onOpen={setSelectedTodoId}
+                                          onRemove={handleRemove}
+                                          onRestore={isTrashView ? handleToggle : undefined}
+                                          sectionName={
+                                            isTrashView ? sectionNameById[item.sectionId] : undefined
+                                          }
+                                          drag={drag}
+                                          isActive={isActive}
+                                        />
+                                      </ScaleDecorator>
                                     )}
                                   />
                                 )}
@@ -373,20 +393,26 @@ export default function App() {
                                 Aucun point de suivi dans les éléments supprimés.
                               </Text>
                             ) : (
-                              <FlatList
+                              <DraggableFlatList
                                 data={points}
-                                keyExtractor={(item) => item.id}
+                                keyExtractor={(item: any) => item.id}
+                                onDragEnd={({ data }: any) => reorderPoints(data.map((d: any) => d.id))}
+                                animationConfig={snapAnimationConfig}
                                 ListHeaderComponent={
                                   pointsLoading ? (
                                     <Text style={styles.empty}>Chargement...</Text>
                                   ) : null
                                 }
-                                renderItem={({ item }) => (
-                                  <TrackingPointCard
-                                    point={item}
-                                    onOpen={setSelectedPointId}
-                                    onRemove={handleRemovePoint}
-                                  />
+                                renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
+                                  <ScaleDecorator activeScale={1.01}>
+                                    <TrackingPointCard
+                                      point={item}
+                                      onOpen={setSelectedPointId}
+                                      onRemove={handleRemovePoint}
+                                      drag={drag}
+                                      isActive={isActive}
+                                    />
+                                  </ScaleDecorator>
                                 )}
                                 ListFooterComponent={
                                   <NewTrackingPointForm onSave={handleAddPoint} />
@@ -438,6 +464,7 @@ export default function App() {
       </SafeAreaView>
       <StatusBar style="dark" />
     </LinearGradient>
+    </GestureHandlerRootView>
   );
 }
 

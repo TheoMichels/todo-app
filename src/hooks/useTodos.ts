@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LayoutAnimation } from "react-native";
 import { Priority, Todo } from "../types/todo";
 import { TRASH_SECTION_ID } from "../types/section";
 import { todoRepository } from "../storage";
@@ -29,7 +30,7 @@ export function useTodos(sectionId: string | undefined) {
   const addTodo = useCallback(
     async (
       title: string,
-      options?: { priority?: Priority; dueDate?: number | null }
+      options?: { priority?: Priority }
     ) => {
       const trimmed = title.trim();
       if (!trimmed || !sectionId || sectionId === TRASH_SECTION_ID) return;
@@ -37,7 +38,6 @@ export function useTodos(sectionId: string | undefined) {
         sectionId,
         title: trimmed,
         priority: options?.priority,
-        dueDate: options?.dueDate ?? null,
       });
       setTodos((prev) => [created, ...prev]);
     },
@@ -64,7 +64,7 @@ export function useTodos(sectionId: string | undefined) {
   );
 
   const updateTodo = useCallback(
-    async (id: string, patch: Partial<Pick<Todo, "title" | "priority" | "dueDate">>) => {
+    async (id: string, patch: Partial<Pick<Todo, "title" | "priority">>) => {
       // Optimistic update
       setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
       
@@ -90,6 +90,25 @@ export function useTodos(sectionId: string | undefined) {
     }
   }, [todos]);
 
+  const reorderTodos = useCallback(async (ids: string[]) => {
+    // Optimistic update
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setTodos((prev) => {
+      const copy = [...prev];
+      for (let i = 0; i < ids.length; i++) {
+        const item = copy.find((t) => t.id === ids[i]);
+        if (item) item.order = i;
+      }
+      return copy;
+    });
+
+    try {
+      await todoRepository.reorder(ids);
+    } catch (e) {
+      load();
+    }
+  }, [load]);
+
   const sectionTodos = useMemo(() => {
     const filtered =
       sectionId === TRASH_SECTION_ID
@@ -107,5 +126,6 @@ export function useTodos(sectionId: string | undefined) {
     toggleTodo,
     updateTodo,
     removeTodo,
+    reorderTodos,
   };
 }

@@ -7,31 +7,29 @@ type Props = {
   point: TrackingPoint;
   onOpen: (id: string) => void;
   onRemove: (id: string) => void;
+  drag?: () => void;
+  isActive?: boolean;
 };
 
-function formatDueDate(dateMs: number) {
-  return new Date(dateMs).toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "short",
-  });
-}
-
-export function TrackingPointCard({ point, onOpen, onRemove }: Props) {
+export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive }: Props) {
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, isActive && styles.cardActive]}>
+      {drag && (
+        <Pressable
+          style={[styles.dragHandle, cursorPointer]}
+          onPressIn={drag}
+          hitSlop={8}
+        >
+          <Text style={styles.dragIcon}>☰</Text>
+        </Pressable>
+      )}
       <Pressable
         style={[styles.textArea, cursorPointer]}
         onPress={() => onOpen(point.id)}
       >
         <View style={styles.titleRow}>
           <Text style={styles.title}>{point.title}</Text>
-          {point.nextDueDate && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>
-                {formatDueDate(point.nextDueDate)}
-              </Text>
-            </View>
-          )}
+          
         </View>
 
         {!!point.status && (
@@ -72,6 +70,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
     ...shadows.sm,
+  },
+  cardActive: {
+    transform: [{ scale: 1.01 }],
+    ...shadows.md,
+    backgroundColor: colors.overlayPanel,
+    borderColor: colors.border,
+  },
+  dragHandle: {
+    padding: 4,
+    justifyContent: "center",
+  },
+  dragIcon: {
+    color: colors.textMuted,
+    fontSize: 18,
   },
   textArea: {
     flex: 1,

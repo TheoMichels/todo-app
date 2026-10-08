@@ -6,6 +6,6 @@ export type Todo = {
   title: string;
   done: boolean;
   priority: Priority;
-  dueDate: number | null;
+  order: number;
   createdAt: number;
 };

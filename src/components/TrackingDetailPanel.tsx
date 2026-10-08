@@ -9,35 +9,24 @@ import {
 } from "react-native";
 import { TrackingPoint } from "../types/trackingPoint";
 import { colors } from "../theme/colors";
-import { Calendar } from "./Calendar";
 
 type Props = {
   point: TrackingPoint;
   onChange: (
-    patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep" | "nextDueDate">>
+    patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep">>
   ) => void;
   onClose: () => void;
 };
-
-function formatDate(dateMs: number) {
-  return new Date(dateMs).toLocaleDateString("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
 
 export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
   const [title, setTitle] = useState(point.title);
   const [status, setStatus] = useState(point.status);
   const [nextStep, setNextStep] = useState(point.nextStep);
-  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     setTitle(point.title);
     setStatus(point.status);
     setNextStep(point.nextStep);
-    setShowCalendar(false);
   }, [point.id]);
 
   const commitTitle = () => {
@@ -84,40 +73,7 @@ export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
           numberOfLines={3}
         />
 
-        <Text style={styles.fieldLabel}>Prochaine échéance</Text>
-        {point.nextDueDate ? (
-          <View style={styles.dueDateRow}>
-            <Pressable onPress={() => setShowCalendar((v) => !v)}>
-              <Text style={styles.dueDateText}>
-                {formatDate(point.nextDueDate)}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                onChange({ nextDueDate: null });
-                setShowCalendar(false);
-              }}
-              hitSlop={8}
-            >
-              <Text style={styles.removeDueDate}>Retirer</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable onPress={() => setShowCalendar((v) => !v)}>
-            <Text style={styles.addDueDate}>+ Ajouter une date</Text>
-          </Pressable>
-        )}
-
-        {showCalendar && (
-          <Calendar
-            value={point.nextDueDate}
-            onSelect={(dateMs) => {
-              onChange({ nextDueDate: dateMs });
-              setShowCalendar(false);
-            }}
-          />
-        )}
-      </ScrollView>
+</ScrollView>
     </View>
   );
 }
@@ -130,10 +86,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    shadowColor: "#93A5CE",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
+    boxShadow: "0px 16px 32px rgba(147, 165, 206, 0.2)",
     elevation: 16,
     ...({ backdropFilter: "blur(32px)" } as any),
   },
@@ -187,39 +140,8 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     lineHeight: 22,
   },
-  dueDateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dueDateText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: colors.textPrimary,
-    textTransform: "capitalize",
-  },
-  removeDueDate: {
-    fontSize: 14,
-    color: colors.danger,
-    fontWeight: "500",
-  },
-  addDueDate: {
-    fontSize: 15,
-    color: colors.accent,
-    fontWeight: "600",
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: "dashed",
-    textAlign: "center",
-  },
+
+
+
+
 });

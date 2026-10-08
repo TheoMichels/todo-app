@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LayoutAnimation } from "react-native";
 import { TrackingPoint } from "../types/trackingPoint";
 import { TRASH_SECTION_ID } from "../types/section";
 import { trackingRepository } from "../storage";
@@ -7,7 +8,6 @@ type NewTrackingPointData = {
   title: string;
   status: string;
   nextStep: string;
-  nextDueDate: number | null;
 };
 
 export function useTrackingPoints(sectionId: string | undefined) {
@@ -44,7 +44,7 @@ export function useTrackingPoints(sectionId: string | undefined) {
   const updatePoint = useCallback(
     async (
       id: string,
-      patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep" | "nextDueDate">>
+      patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep">>
     ) => {
       const updated = await trackingRepository.update(id, patch);
       setPoints((prev) => prev.map((p) => (p.id === id ? updated : p)));
@@ -57,8 +57,28 @@ export function useTrackingPoints(sectionId: string | undefined) {
     setPoints((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  const reorderPoints = useCallback(async (ids: string[]) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPoints((prev) => {
+      const copy = [...prev];
+      for (let i = 0; i < ids.length; i++) {
+        const item = copy.find((t) => t.id === ids[i]);
+        if (item) item.order = i;
+      }
+      return copy;
+    });
+    try {
+      await trackingRepository.reorder(ids);
+    } catch (e) {
+      load();
+    }
+  }, [load]);
+
   const sectionPoints = useMemo(
-    () => points.filter((p) => p.sectionId === sectionId),
+    () => [...points.filter((p) => p.sectionId === sectionId)].sort((a, b) => {
+      if (a.order !== b.order) return (a.order ?? 0) - (b.order ?? 0);
+      return a.createdAt - b.createdAt;
+    }),
     [points, sectionId]
   );
 
@@ -70,5 +90,6 @@ export function useTrackingPoints(sectionId: string | undefined) {
     addPoint,
     updatePoint,
     removePoint,
+    reorderPoints,
   };
 }

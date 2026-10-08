@@ -9,11 +9,10 @@ import {
 } from "react-native";
 import { Priority, Todo } from "../types/todo";
 import { colors } from "../theme/colors";
-import { Calendar } from "./Calendar";
 
 type Props = {
   todo: Todo;
-  onChange: (patch: Partial<Pick<Todo, "title" | "priority" | "dueDate">>) => void;
+  onChange: (patch: Partial<Pick<Todo, "title" | "priority">>) => void;
   onClose: () => void;
 };
 
@@ -22,21 +21,11 @@ const PRIORITIES: { value: Priority; label: string }[] = [
   { value: "urgent", label: "Urgent" },
 ];
 
-function formatDate(dateMs: number) {
-  return new Date(dateMs).toLocaleDateString("fr-FR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-}
-
 export function TaskDetailPanel({ todo, onChange, onClose }: Props) {
   const [title, setTitle] = useState(todo.title);
-  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     setTitle(todo.title);
-    setShowCalendar(false);
   }, [todo.id]);
 
   const commitTitle = () => {
@@ -92,38 +81,7 @@ export function TaskDetailPanel({ todo, onChange, onClose }: Props) {
           })}
         </View>
 
-        <Text style={styles.fieldLabel}>Date d'échéance</Text>
-        {todo.dueDate ? (
-          <View style={styles.dueDateRow}>
-            <Pressable onPress={() => setShowCalendar((v) => !v)}>
-              <Text style={styles.dueDateText}>{formatDate(todo.dueDate)}</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                onChange({ dueDate: null });
-                setShowCalendar(false);
-              }}
-              hitSlop={8}
-            >
-              <Text style={styles.removeDueDate}>Retirer</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable onPress={() => setShowCalendar((v) => !v)}>
-            <Text style={styles.addDueDate}>+ Ajouter une date</Text>
-          </Pressable>
-        )}
-
-        {showCalendar && (
-          <Calendar
-            value={todo.dueDate}
-            onSelect={(dateMs) => {
-              onChange({ dueDate: dateMs });
-              setShowCalendar(false);
-            }}
-          />
-        )}
-      </ScrollView>
+</ScrollView>
     </View>
   );
 }
@@ -136,10 +94,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: colors.borderStrong,
-    shadowColor: "#93A5CE",
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.2,
-    shadowRadius: 32,
+    boxShadow: "0px 16px 32px rgba(147, 165, 206, 0.2)",
     elevation: 16,
     ...({ backdropFilter: "blur(32px)" } as any),
   },
@@ -208,39 +163,8 @@ const styles = StyleSheet.create({
   priorityTextSelected: {
     color: colors.textOnBrand,
   },
-  dueDateRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dueDateText: {
-    fontSize: 15,
-    fontWeight: "500",
-    color: colors.textPrimary,
-    textTransform: "capitalize",
-  },
-  removeDueDate: {
-    fontSize: 14,
-    color: colors.danger,
-    fontWeight: "500",
-  },
-  addDueDate: {
-    fontSize: 15,
-    color: colors.accent,
-    fontWeight: "600",
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderStyle: "dashed",
-    textAlign: "center",
-  },
+
+
+
+
 });

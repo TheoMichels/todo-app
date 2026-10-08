@@ -303,21 +303,16 @@ components:
           type: boolean
         priority:
           $ref: "#/components/schemas/Priority"
-        dueDate:
-          type: string
-          format: date
-          nullable: true
         createdAt:
           type: string
           format: date-time
-      required: [id, sectionId, title, done, priority, dueDate, createdAt]
+      required: [id, sectionId, title, done, priority, createdAt]
       example:
         id: "b1b2c3d4-0000-0000-0000-000000000002"
         sectionId: "a1b2c3d4-0000-0000-0000-000000000001"
         title: "Préparer la réunion avec Paul"
         done: false
         priority: urgent
-        dueDate: "2026-08-24"
         createdAt: "2026-08-23T09:12:00Z"
 
     TodoCreate:
@@ -331,16 +326,11 @@ components:
           minLength: 1
         priority:
           $ref: "#/components/schemas/Priority"
-        dueDate:
-          type: string
-          format: date
-          nullable: true
       required: [sectionId, title]
       example:
         sectionId: "a1b2c3d4-0000-0000-0000-000000000001"
         title: "Envoyer le rapport"
         priority: standard
-        dueDate: null
 
     TodoUpdate:
       type: object
@@ -351,10 +341,6 @@ components:
           minLength: 1
         priority:
           $ref: "#/components/schemas/Priority"
-        dueDate:
-          type: string
-          format: date
-          nullable: true
         done:
           type: boolean
       example:
@@ -372,20 +358,15 @@ components:
           type: string
         nextStep:
           type: string
-        nextDueDate:
-          type: string
-          format: date
-          nullable: true
         createdAt:
           type: string
           format: date-time
-      required: [id, title, status, nextStep, nextDueDate, createdAt]
+      required: [id, title, status, nextStep, createdAt]
       example:
         id: "c1b2c3d4-0000-0000-0000-000000000003"
         title: "Livraison dépendance équipe A"
         status: "En attente de validation par équipe A"
         nextStep: "Relancer équipe A vendredi"
-        nextDueDate: "2026-08-28"
         createdAt: "2026-08-23T10:00:00Z"
 
     TrackingPointCreate:
@@ -398,16 +379,11 @@ components:
           type: string
         nextStep:
           type: string
-        nextDueDate:
-          type: string
-          format: date
-          nullable: true
       required: [title]
       example:
         title: "Livraison dépendance équipe A"
         status: "En attente de validation par équipe A"
         nextStep: "Relancer équipe A vendredi"
-        nextDueDate: "2026-08-28"
 
     TrackingPointUpdate:
       type: object
@@ -420,9 +396,5 @@ components:
           type: string
         nextStep:
           type: string
-        nextDueDate:
-          type: string
-          format: date
-          nullable: true
       example:
         status: "Validé, en attente de déploiement"

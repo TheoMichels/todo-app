@@ -6,11 +6,11 @@ export interface TodoRepository {
     sectionId: string;
     title: string;
     priority?: Priority;
-    dueDate?: number | null;
   }): Promise<Todo>;
   update(
     id: string,
-    patch: Partial<Pick<Todo, "title" | "priority" | "dueDate" | "done">>
+    patch: Partial<Pick<Todo, "title" | "priority" | "done" | "order">>
   ): Promise<Todo>;
   remove(id: string): Promise<void>;
+  reorder(ids: string[]): Promise<void>;
 }
