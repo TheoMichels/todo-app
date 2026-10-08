@@ -28,17 +28,17 @@ export function NewTaskForm({ onAdd }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.row}>
-        <TextInput
-          style={styles.input}
-          placeholder="Ajouter une tâche..."
-          placeholderTextColor={colors.textMuted}
-          value={title}
-          onChangeText={setTitle}
-          onSubmitEditing={handleAdd}
-          returnKeyType="done"
-        />
+      <TextInput
+        style={styles.input}
+        placeholder="Ajouter une tâche..."
+        placeholderTextColor={colors.textMuted}
+        value={title}
+        onChangeText={setTitle}
+        onSubmitEditing={handleAdd}
+        returnKeyType="done"
+      />
 
+      <View style={styles.controlsRow}>
         <Pressable
           style={[styles.urgentToggle, urgent && styles.urgentToggleActive, cursorPointer]}
           onPress={() => setUrgent((v) => !v)}
@@ -62,16 +62,15 @@ export function NewTaskForm({ onAdd }: Props) {
 const styles = StyleSheet.create({
   container: {
     marginBottom: 24,
+    gap: 12,
   },
-  row: {
+  controlsRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
     gap: 12,
   },
   input: {
-    flex: 1,
-    minWidth: 200,
+    width: "100%",
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
     backgroundColor: colors.surface,
@@ -82,8 +81,10 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   urgentToggle: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     gap: 6,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.4)",
@@ -128,11 +129,13 @@ const styles = StyleSheet.create({
 
 
   addButton: {
+    flex: 1,
     backgroundColor: colors.accent,
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
     justifyContent: "center",
+    alignItems: "center",
   },
   addButtonText: {
     color: colors.textOnBrand,
