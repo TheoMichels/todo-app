@@ -29,4 +29,9 @@ export const apiSectionRepository: SectionRepository = {
     await store.saveAll(all);
     return updated;
   },
+  async remove(id) {
+    const all = await store.loadLocal();
+    const filtered = all.filter(s => s.id !== id);
+    await store.saveAll(filtered);
+  },
 };

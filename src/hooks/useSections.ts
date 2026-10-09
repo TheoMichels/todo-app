@@ -44,5 +44,10 @@ export function useSections() {
     setSections((prev) => prev.map((s) => (s.id === id ? updated : s)));
   }, []);
 
-  return { sections, loading, error, retry: load, addSection, updateSection };
+  const removeSection = useCallback(async (id: string) => {
+    await sectionRepository.remove(id);
+    setSections((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
+  return { sections, loading, error, retry: load, addSection, updateSection, removeSection };
 }

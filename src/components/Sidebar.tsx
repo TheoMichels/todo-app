@@ -13,20 +13,22 @@ import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
   sections: Section[];
+  todoCounts?: Record<string, number>;
   selectedId: string | undefined;
   onSelect: (id: string) => void;
   onAdd: (name: string) => void;
   onRename: (id: string, name: string) => void;
+  onRemove: (id: string) => void;
   isMobile?: boolean;
   onClose?: () => void;
 };
 
-export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename, isMobile, onClose }: Props) {
+export function Sidebar({ sections, todoCounts = {}, selectedId, onSelect, onAdd, onRename, onRemove, isMobile, onClose }: Props) {
   const [isAdding, setIsAdding] = useState(false);
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isManageMode, setIsManageMode] = useState(false);
 
   const commitAdd = () => {
     const trimmed = draft.trim();
@@ -75,20 +77,10 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename, isMob
             );
           }
 
-          // react-native-web forwards onMouseEnter/onMouseLeave straight to the
-          // DOM node, but RN's official View types don't declare them (web-only
-          // runtime behavior), hence the loosely-typed spread.
-          const hoverProps = isMobile ? {} : {
-            onMouseEnter: () => setHoveredId(section.id),
-            onMouseLeave: () =>
-              setHoveredId((current) => (current === section.id ? null : current)),
-          };
-
           return (
             <View
               key={section.id}
               style={[styles.item, selected && styles.itemSelected]}
-              {...hoverProps}
             >
               <Pressable
                 style={[styles.itemPressable, cursorPointer]}
@@ -100,25 +92,52 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename, isMob
                 >
                   {section.name}
                 </Text>
+                {!!todoCounts[section.id] && !isManageMode && (
+                  <View style={[styles.badge, selected && styles.badgeSelected]}>
+                    <Text style={[styles.badgeText, selected && styles.badgeTextSelected]}>
+                      {todoCounts[section.id]}
+                    </Text>
+                  </View>
+                )}
               </Pressable>
-              {hoveredId === section.id && (
-                <Pressable
-                  style={cursorPointer}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    startEditing(section);
-                  }}
-                  hitSlop={8}
-                >
-                  <Text
-                    style={[
-                      styles.editIcon,
-                      selected && styles.editIconSelected,
-                    ]}
+              {isManageMode && (
+                <View style={styles.manageIconsRow}>
+                  <Pressable
+                    style={cursorPointer}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      startEditing(section);
+                    }}
+                    hitSlop={8}
                   >
-                    ✎
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={[
+                        styles.manageTextAction,
+                        selected && styles.manageTextActionSelected,
+                      ]}
+                    >
+                      ✎
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={cursorPointer}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      onRemove(section.id);
+                    }}
+                    hitSlop={8}
+                  >
+                    <Text
+                      style={[
+                        styles.manageTextAction,
+                        selected && styles.manageTextActionSelected,
+                        styles.deleteIcon,
+                      ]}
+                    >
+                      ✕
+                    </Text>
+                  </Pressable>
+                </View>
               )}
             </View>
           );
@@ -178,12 +197,20 @@ export function Sidebar({ sections, selectedId, onSelect, onAdd, onRename, isMob
           autoFocus
         />
       ) : (
-        <Pressable
-          style={[styles.addButton, cursorPointer]}
-          onPress={() => setIsAdding(true)}
-        >
-          <Text style={styles.addButtonText}>+ Nouvelle Section</Text>
-        </Pressable>
+        <View style={styles.actionButtons}>
+          <Pressable
+            style={[styles.addButton, cursorPointer]}
+            onPress={() => setIsAdding(true)}
+          >
+            <Text style={styles.addButtonText}>+ Nouvelle Section</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.addButton, styles.manageButton, cursorPointer, isManageMode && styles.manageButtonActive]}
+            onPress={() => setIsManageMode(!isManageMode)}
+          >
+            <Text style={[styles.addButtonText, isManageMode && styles.manageButtonTextActive]}>Gérer sections</Text>
+          </Pressable>
+        </View>
       )}
     </View>
   );
@@ -247,6 +274,9 @@ const styles = StyleSheet.create({
   },
   itemPressable: {
     flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   itemText: {
     flex: 1,
@@ -257,11 +287,30 @@ const styles = StyleSheet.create({
   itemTextSelected: {
     color: colors.textOnBrand,
   },
-  editIcon: {
+  badge: {
+    backgroundColor: colors.border,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  badgeSelected: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  badgeTextSelected: {
+    color: colors.textOnBrand,
+  },
+  manageTextAction: {
     fontSize: 16,
+    fontWeight: "500",
     color: colors.textMuted,
   },
-  editIconSelected: {
+  manageTextActionSelected: {
     color: colors.textOnBrand,
   },
   divider: {
@@ -307,4 +356,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 4,
   },
+  manageIconsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  deleteIcon: {
+    color: "#ffffff",
+    fontSize: 14,
+  },
+  actionButtons: {
+    gap: 8,
+  },
+  manageButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  manageButtonActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  manageButtonTextActive: {
+    color: colors.textOnBrand,
+  }
 });

@@ -57,6 +57,7 @@ export default function App() {
     retry: retrySections,
     addSection,
     updateSection,
+    removeSection,
   } = useSections();
   const [selectedSectionId, setSelectedSectionId] = useState<string>();
 
@@ -80,6 +81,7 @@ export default function App() {
     updateTodo,
     removeTodo,
     reorderTodos,
+    todoCounts,
   } = useTodos(selectedSectionId);
   const [selectedTodoId, setSelectedTodoId] = useState<string>();
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -151,6 +153,14 @@ export default function App() {
   const handleRenameSection = (id: string, name: string) =>
     runAction(() => updateSection(id, name));
 
+  const handleRemoveSection = (id: string) =>
+    runAction(async () => {
+      await removeSection(id);
+      if (selectedSectionId === id) {
+        setSelectedSectionId(sections.find(s => s.id !== id)?.id);
+      }
+    });
+
   const handleAddTodo = (
     title: string,
     options: Parameters<typeof addTodo>[1]
@@ -200,6 +210,7 @@ export default function App() {
   const sidebarElement = (
     <Sidebar
       sections={sections}
+      todoCounts={todoCounts}
       selectedId={selectedSectionId}
       isMobile={isMobile}
       onClose={isMobile ? () => setSidebarVisible(false) : undefined}
@@ -210,6 +221,7 @@ export default function App() {
       }}
       onAdd={handleAddSection}
       onRename={handleRenameSection}
+      onRemove={handleRemoveSection}
     />
   );
 

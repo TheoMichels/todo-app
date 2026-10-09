@@ -117,8 +117,19 @@ export function useTodos(sectionId: string | undefined) {
     return sortTodos(filtered);
   }, [todos, sectionId]);
 
+  const todoCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of todos) {
+      if (!t.done) {
+        counts[t.sectionId] = (counts[t.sectionId] || 0) + 1;
+      }
+    }
+    return counts;
+  }, [todos]);
+
   return {
     todos: sectionTodos,
+    todoCounts,
     loading,
     error,
     retry: load,
