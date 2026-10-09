@@ -17,6 +17,7 @@ export const apiTrackingRepository: TrackingRepository = {
       title: input.title,
       status: input.status,
       nextStep: input.nextStep,
+      dueDate: input.dueDate,
       order: maxOrder + 1,
       createdAt: Date.now(),
     };

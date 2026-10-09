@@ -4,6 +4,7 @@ export type TrackingPoint = {
   title: string;
   status: string;
   nextStep: string;
+  dueDate?: string;
   order: number;
   createdAt: number;
 };

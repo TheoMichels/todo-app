@@ -29,7 +29,11 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive }: P
       >
         <View style={styles.titleRow}>
           <Text style={styles.title}>{point.title}</Text>
-          
+          {!!point.dueDate && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>📅 {point.dueDate}</Text>
+            </View>
+          )}
         </View>
 
         {!!point.status && (

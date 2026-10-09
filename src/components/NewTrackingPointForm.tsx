@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { createElement, useState } from "react";
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
+import { CalendarPicker } from "./CalendarPicker";
 
 type Props = {
   onSave: (data: {
     title: string;
     status: string;
     nextStep: string;
-    
+    dueDate?: string;
   }) => Promise<void>;
 };
 
@@ -17,18 +18,22 @@ export function NewTrackingPointForm({ onSave }: Props) {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("");
   const [nextStep, setNextStep] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const reset = () => {
     setTitle("");
     setStatus("");
     setNextStep("");
+    setDueDate("");
+    setShowCalendar(false);
     setIsOpen(false);
   };
 
   const handleSave = async () => {
     if (!title.trim()) return;
     try {
-      await onSave({ title, status, nextStep });
+      await onSave({ title, status, nextStep, dueDate: dueDate || undefined });
       reset();
     } catch {
       // Surfaced by the parent's error banner; keep the form open and filled.
@@ -79,6 +84,25 @@ export function NewTrackingPointForm({ onSave }: Props) {
         multiline
         numberOfLines={3}
       />
+
+      <Text style={styles.fieldLabel}>Échéance</Text>
+      <Pressable 
+        style={[styles.dateButton, cursorPointer]} 
+        onPress={() => setShowCalendar(!showCalendar)}
+      >
+        <Text style={[styles.dateButtonText, !dueDate && styles.dateButtonTextEmpty]}>
+          📅 {dueDate || "Sélectionner une date"}
+        </Text>
+      </Pressable>
+      {showCalendar && (
+        <CalendarPicker 
+          value={dueDate} 
+          onChange={(val) => {
+            setDueDate(val);
+            setShowCalendar(false);
+          }} 
+        />
+      )}
 
       <View style={styles.actions}>
         <Pressable style={cursorPointer} onPress={reset}>
@@ -151,6 +175,21 @@ const styles = StyleSheet.create({
 
 
 
+  dateButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.overlayPanel,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dateButtonText: {
+    fontSize: 14,
+    color: colors.textPrimary,
+  },
+  dateButtonTextEmpty: {
+    color: colors.textMuted,
+  },
   actions: {
     flexDirection: "row",
     justifyContent: "flex-end",

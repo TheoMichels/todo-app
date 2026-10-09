@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useState } from "react";
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,10 +11,12 @@ import {
 import { TrackingPoint } from "../types/trackingPoint";
 import { colors } from "../theme/colors";
 
+import { CalendarPicker } from "./CalendarPicker";
+
 type Props = {
   point: TrackingPoint;
   onChange: (
-    patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep">>
+    patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep" | "dueDate">>
   ) => void;
   onClose: () => void;
 };
@@ -22,12 +25,15 @@ export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
   const [title, setTitle] = useState(point.title);
   const [status, setStatus] = useState(point.status);
   const [nextStep, setNextStep] = useState(point.nextStep);
+  const [dueDate, setDueDate] = useState(point.dueDate || "");
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     setTitle(point.title);
     setStatus(point.status);
     setNextStep(point.nextStep);
-  }, [point.id]);
+    setDueDate(point.dueDate || "");
+  }, [point.id, point.title, point.status, point.nextStep, point.dueDate]);
 
   const commitTitle = () => {
     if (title.trim()) onChange({ title });
@@ -72,6 +78,26 @@ export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
           multiline
           numberOfLines={3}
         />
+
+        <Text style={styles.fieldLabel}>Échéance</Text>
+        <Pressable 
+          style={[styles.dateButton, { cursor: 'pointer' } as any]} 
+          onPress={() => setShowCalendar(!showCalendar)}
+        >
+          <Text style={[styles.dateButtonText, !dueDate && styles.dateButtonTextEmpty]}>
+            📅 {dueDate || "Sélectionner une date"}
+          </Text>
+        </Pressable>
+        {showCalendar && (
+          <CalendarPicker 
+            value={dueDate} 
+            onChange={(val) => {
+              setDueDate(val);
+              onChange({ dueDate: val || undefined });
+              setShowCalendar(false);
+            }} 
+          />
+        )}
 
 </ScrollView>
     </View>
@@ -140,8 +166,19 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
     lineHeight: 22,
   },
-
-
-
-
+  dateButton: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dateButtonText: {
+    fontSize: 15,
+    color: colors.textPrimary,
+  },
+  dateButtonTextEmpty: {
+    color: colors.textMuted,
+  },
 });

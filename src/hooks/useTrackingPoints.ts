@@ -8,6 +8,7 @@ type NewTrackingPointData = {
   title: string;
   status: string;
   nextStep: string;
+  dueDate?: string;
 };
 
 export function useTrackingPoints(sectionId: string | undefined) {
@@ -44,7 +45,7 @@ export function useTrackingPoints(sectionId: string | undefined) {
   const updatePoint = useCallback(
     async (
       id: string,
-      patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep">>
+      patch: Partial<Pick<TrackingPoint, "title" | "status" | "nextStep" | "dueDate">>
     ) => {
       const updated = await trackingRepository.update(id, patch);
       setPoints((prev) => prev.map((p) => (p.id === id ? updated : p)));
