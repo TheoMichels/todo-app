@@ -16,13 +16,20 @@ export function NewTaskForm({ onAdd }: Props) {
   const [urgent, setUrgent] = useState(false);
 
   const handleAdd = async () => {
-    if (!title.trim()) return;
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return;
+    const prevTitle = title;
+    const prevUrgent = urgent;
+
+    setTitle("");
+    setUrgent(false);
+
     try {
-      await onAdd(title, { priority: urgent ? "urgent" : "standard" });
-      setTitle("");
-      setUrgent(false);
+      await onAdd(trimmedTitle, { priority: prevUrgent ? "urgent" : "standard" });
     } catch {
       // Surfaced by the parent's error banner; keep the form filled so nothing is lost.
+      setTitle(prevTitle);
+      setUrgent(prevUrgent);
     }
   };
 

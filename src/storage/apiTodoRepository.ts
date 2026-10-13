@@ -17,15 +17,20 @@ export const apiTodoRepository: TodoRepository = {
     const all = await store.loadLocal();
     const maxOrder = all.reduce((max, t) => Math.max(max, t.order ?? 0), 0);
     const newTodo: Todo = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: input.id ?? Math.random().toString(36).substring(2, 9),
       sectionId: input.sectionId,
       title: input.title,
       done: false,
       priority: input.priority ?? "standard",
-      order: maxOrder + 1,
-      createdAt: Date.now(),
+      order: input.order ?? (maxOrder + 1),
+      createdAt: input.createdAt ?? Date.now(),
     };
-    all.push(newTodo);
+    const existingIndex = all.findIndex((t) => t.id === newTodo.id);
+    if (existingIndex >= 0) {
+      all[existingIndex] = newTodo;
+    } else {
+      all.push(newTodo);
+    }
     await store.saveAll(all);
     return newTodo;
   },

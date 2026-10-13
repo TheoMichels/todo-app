@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutAnimation } from "react-native";
 import { Priority, Todo } from "../types/todo";
 import { TRASH_SECTION_ID } from "../types/section";
@@ -9,6 +9,8 @@ export function useTodos(sectionId: string | undefined) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const todosRef = useRef<Todo[]>(todos);
+  todosRef.current = todos;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -16,6 +18,7 @@ export function useTodos(sectionId: string | undefined) {
     try {
       const loaded = await todoRepository.list();
       setTodos(loaded);
+      todosRef.current = loaded;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erreur inconnue");
     } finally {
@@ -34,19 +37,40 @@ export function useTodos(sectionId: string | undefined) {
     ) => {
       const trimmed = title.trim();
       if (!trimmed || !sectionId || sectionId === TRASH_SECTION_ID) return;
-      const created = await todoRepository.create({
+
+      const newId = Math.random().toString(36).substring(2, 9);
+      const currentTodos = todosRef.current;
+      const maxOrder = currentTodos.reduce((max, t) => Math.max(max, t.order ?? 0), 0);
+      const optimisticTodo: Todo = {
+        id: newId,
         sectionId,
         title: trimmed,
-        priority: options?.priority,
-      });
-      setTodos((prev) => [created, ...prev]);
+        done: false,
+        priority: options?.priority ?? "standard",
+        order: maxOrder + 1,
+        createdAt: Date.now(),
+      };
+
+      // Optimistic update
+      todosRef.current = [optimisticTodo, ...currentTodos];
+      setTodos((prev) => [optimisticTodo, ...prev]);
+
+      try {
+        const created = await todoRepository.create(optimisticTodo);
+        setTodos((prev) => prev.map((t) => (t.id === newId ? { ...created, ...t } : t)));
+      } catch (e) {
+        setTodos((prev) => prev.filter((t) => t.id !== newId));
+        todosRef.current = todosRef.current.filter((t) => t.id !== newId);
+        load();
+        throw e;
+      }
     },
-    [sectionId]
+    [sectionId, load]
   );
 
   const toggleTodo = useCallback(
     async (id: string) => {
-      const current = todos.find((t) => t.id === id);
+      const current = todosRef.current.find((t) => t.id === id);
       if (!current) return;
       
       const newDone = !current.done;
@@ -60,7 +84,7 @@ export function useTodos(sectionId: string | undefined) {
         load();
       }
     },
-    [todos, load]
+    [load]
   );
 
   const updateTodo = useCallback(
