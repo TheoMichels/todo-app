@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: "hidden",
     ...shadows.sm,
     ...({ backdropFilter: "blur(24px)" } as any),
   },

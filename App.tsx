@@ -322,7 +322,11 @@ export default function App() {
                         ) : notesLoading ? (
                           <Text style={styles.empty}>Chargement...</Text>
                         ) : (
-                          <ScrollView showsVerticalScrollIndicator={false}>
+                          <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            style={styles.list}
+                            contentContainerStyle={styles.listContent}
+                          >
                             <View style={styles.notesGrid}>
                               {notes.map((note) => (
                                 <NoteCard
@@ -366,28 +370,33 @@ export default function App() {
                                       : "Aucune tâche pour le moment."}
                                   </Text>
                                 ) : (
-                                  <DraggableFlatList
-                                    data={todos}
-                                    keyExtractor={(item: any) => item.id}
-                                    onDragEnd={({ data }: any) => reorderTodos(data.map((d: any) => d.id))}
-                                    animationConfig={snapAnimationConfig}
-                                    renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
-                                      <ScaleDecorator activeScale={1.01}>
-                                        <TodoItem
-                                          todo={item}
-                                          onToggle={handleToggle}
-                                          onOpen={setSelectedTodoId}
-                                          onRemove={handleRemove}
-                                          onRestore={isTrashView ? handleToggle : undefined}
-                                          sectionName={
-                                            isTrashView ? sectionNameById[item.sectionId] : undefined
-                                          }
-                                          drag={drag}
-                                          isActive={isActive}
-                                        />
-                                      </ScaleDecorator>
-                                    )}
-                                  />
+                                  <View style={styles.listWrapper}>
+                                    <DraggableFlatList
+                                      data={todos}
+                                      keyExtractor={(item: any) => item.id}
+                                      onDragEnd={({ data }: any) => reorderTodos(data.map((d: any) => d.id))}
+                                      animationConfig={snapAnimationConfig}
+                                      containerStyle={styles.listContainer}
+                                      style={styles.list}
+                                      contentContainerStyle={styles.listContent}
+                                      renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
+                                        <ScaleDecorator activeScale={1.01}>
+                                          <TodoItem
+                                            todo={item}
+                                            onToggle={handleToggle}
+                                            onOpen={setSelectedTodoId}
+                                            onRemove={handleRemove}
+                                            onRestore={isTrashView ? handleToggle : undefined}
+                                            sectionName={
+                                              isTrashView ? sectionNameById[item.sectionId] : undefined
+                                            }
+                                            drag={drag}
+                                            isActive={isActive}
+                                          />
+                                        </ScaleDecorator>
+                                      )}
+                                    />
+                                  </View>
                                 )}
                               </>
                             )}
@@ -405,31 +414,36 @@ export default function App() {
                                 Aucun point de suivi dans les éléments supprimés.
                               </Text>
                             ) : (
-                              <DraggableFlatList
-                                data={points}
-                                keyExtractor={(item: any) => item.id}
-                                onDragEnd={({ data }: any) => reorderPoints(data.map((d: any) => d.id))}
-                                animationConfig={snapAnimationConfig}
-                                ListHeaderComponent={
-                                  pointsLoading ? (
-                                    <Text style={styles.empty}>Chargement...</Text>
-                                  ) : null
-                                }
-                                renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
-                                  <ScaleDecorator activeScale={1.01}>
-                                    <TrackingPointCard
-                                      point={item}
-                                      onOpen={setSelectedPointId}
-                                      onRemove={handleRemovePoint}
-                                      drag={drag}
-                                      isActive={isActive}
-                                    />
-                                  </ScaleDecorator>
-                                )}
-                                ListFooterComponent={
-                                  <NewTrackingPointForm onSave={handleAddPoint} />
-                                }
-                              />
+                              <View style={styles.listWrapper}>
+                                <DraggableFlatList
+                                  data={points}
+                                  keyExtractor={(item: any) => item.id}
+                                  onDragEnd={({ data }: any) => reorderPoints(data.map((d: any) => d.id))}
+                                  animationConfig={snapAnimationConfig}
+                                  containerStyle={styles.listContainer}
+                                  style={styles.list}
+                                  contentContainerStyle={styles.listContent}
+                                  ListHeaderComponent={
+                                    pointsLoading ? (
+                                      <Text style={styles.empty}>Chargement...</Text>
+                                    ) : null
+                                  }
+                                  renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
+                                    <ScaleDecorator activeScale={1.01}>
+                                      <TrackingPointCard
+                                        point={item}
+                                        onOpen={setSelectedPointId}
+                                        onRemove={handleRemovePoint}
+                                        drag={drag}
+                                        isActive={isActive}
+                                      />
+                                    </ScaleDecorator>
+                                  )}
+                                  ListFooterComponent={
+                                    <NewTrackingPointForm onSave={handleAddPoint} />
+                                  }
+                                />
+                              </View>
                             )}
                           </View>
                         )}
@@ -494,6 +508,7 @@ const styles = StyleSheet.create({
   pageContent: {
     flex: 1,
     padding: 12,
+    minHeight: 0,
   },
   topBar: {
     flexDirection: "row",
@@ -519,10 +534,12 @@ const styles = StyleSheet.create({
   layout: {
     flex: 1,
     flexDirection: "row",
+    minHeight: 0,
   },
   mainArea: {
     flex: 1,
     flexDirection: "column",
+    minHeight: 0,
   },
   sidebarWrapper: {
     overflow: "hidden",
@@ -548,16 +565,34 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     gap: 12,
+    minHeight: 0,
   },
   content: {
     flex: 1,
     borderRadius: 24,
     backgroundColor: colors.panel,
-    padding: 20,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 0,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: "hidden",
+    minHeight: 0,
     ...shadows.sm,
     ...({ backdropFilter: "blur(24px)" } as any),
+  },
+  listWrapper: {
+    flex: 1,
+    minHeight: 0,
+  },
+  listContainer: {
+    flex: 1,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 20,
   },
   sidebarToggle: {
     width: 40,
