@@ -44,54 +44,15 @@ export class OfflineStore<T extends { id: string }> {
 
   async syncRemote(items: T[]): Promise<void> {
     if (isLocalMode) return;
-    const apiUrl = getApiUrl(this.collection);
-    if (!apiUrl) return;
-
     try {
-      await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(items),
-      });
-    } catch (err) {
-      console.warn("Failed to sync remote", err);
+      const { syncCollectionToCloud } = await import("../services/syncService");
+      await syncCollectionToCloud(this.collection, items);
+    } catch {
+      // Ignorer si la synchronisation échoue hors-ligne
     }
   }
 
   async load(): Promise<T[]> {
-    if (isLocalMode) {
-      return this.loadLocal();
-    }
-
-    const apiUrl = getApiUrl(this.collection);
-    if (!apiUrl) return this.loadLocal();
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
-
-      const res = await fetch(apiUrl, {
-        method: "GET",
-        headers: { Accept: "application/json" },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          const validated = z.array(this.itemSchema).safeParse(data);
-          if (validated.success) {
-            await this.saveLocal(validated.data);
-            return validated.data;
-          } else {
-            console.warn("API returned invalid data format, keeping local cache");
-          }
-        }
-      }
-    } catch {
-      console.warn("API fetch failed, falling back to local");
-    }
     return this.loadLocal();
   }
 

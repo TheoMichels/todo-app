@@ -124,6 +124,13 @@ export const TodosSchema = z.array(TodoSchema);
 export const NotesSchema = z.array(NoteSchema);
 export const TrackingPointsSchema = z.array(TrackingPointSchema);
 
+// --- Credentials (Auth) ---
+export const credentialsSchema = z.object({
+  email: z.string().trim().email("Adresse e-mail invalide"),
+  password: z.string().min(6, "Le mot de passe doit comporter au moins 6 caractères"),
+});
+export type Credentials = z.infer<typeof credentialsSchema>;
+
 // --- Validation helper ---
 export class ValidationError extends Error {
   constructor(message: string, public readonly issues?: z.ZodIssue[]) {
@@ -146,3 +153,4 @@ export function validate<S extends z.ZodTypeAny>(
   }
   return result.data;
 }
+
