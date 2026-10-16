@@ -1,0 +1,82 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["todo", "auth"]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+// -----------------------------------------------------------------------------
+// 1. Sections (Dossiers / catégories de tâches)
+// -----------------------------------------------------------------------------
+model Section {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_sections_user_id")
+  @@map("sections")
+  @@schema("todo")
+}
+
+// -----------------------------------------------------------------------------
+// 2. Todos (Tâches individuelles avec priorité et ordre)
+// -----------------------------------------------------------------------------
+model Todo {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") @db.Uuid
+  sectionId String?  @map("section_id")
+  title     String
+  done      Boolean  @default(false)
+  priority  String   @default("standard")
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_todos_user_id")
+  @@index([userId, sectionId], map: "idx_todos_user_section")
+  @@map("todos")
+  @@schema("todo")
+}
+
+// -----------------------------------------------------------------------------
+// 3. Notes (Bloc-notes textuel)
+// -----------------------------------------------------------------------------
+model Note {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id") @db.Uuid
+  title       String
+  description String   @default("")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_notes_user_id")
+  @@map("notes")
+  @@schema("todo")
+}
+
+// -----------------------------------------------------------------------------
+// 4. TrackingPoints (Points de suivi avec statut, prochaine étape et échéance)
+// -----------------------------------------------------------------------------
+model TrackingPoint {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") @db.Uuid
+  sectionId String?  @map("section_id")
+  title     String
+  status    String   @default("in_progress")
+  nextStep  String   @default("") @map("next_step")
+  dueDate   String?  @map("due_date")
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_tracking_points_user_id")
+  @@map("tracking_points")
+  @@schema("todo")
+}
