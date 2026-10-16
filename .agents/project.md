@@ -14,10 +14,10 @@
 ## Commandes
 | Action | Commande |
 |---|---|
-| Dev | `npm run web` |
-| Build web | `npx expo export -p web` (sortie `dist/`, cf. `vercel.json`) |
-| Typecheck / Lint / Tests / E2E | **non configurés** — à ajouter via `project-bootstrap` à la première tâche de code |
-| Port de preview QA | 4173 (pas encore de `.agents/harness.config`) |
+| Dev / Build web | `npm run web` · `npm run build` (`dist/`, cf. `vercel.json`) |
+| Preview / Typecheck | `npm run preview` (port 4173) · `npm run typecheck` |
+| Lint / Tests / E2E | `npm run lint` · `npm test` · `npm run test:e2e` |
+
 
 ## Modèle de données
 | Entité | Type | Repository (local / API) |

@@ -30,8 +30,9 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
-.env*.local
+# env files
+.env*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -40,7 +41,7 @@ yarn-error.*
 /ios
 /android
 
-# Artefacts d'agents (rapports, captures, logs)
+# Artefacts d'agents et tests
 .agents/handoff/
 .agents/state/
 test-results/
