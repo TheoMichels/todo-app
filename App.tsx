@@ -32,7 +32,7 @@ import { NoteCard } from "./src/components/NoteCard";
 import { NewNoteForm } from "./src/components/NewNoteForm";
 import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
-import { Logo } from "./src/components/Logo";
+import { Header } from "./src/components/Header";
 import { colors, gradient, shadows } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
 import { NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
@@ -252,22 +252,7 @@ export default function App() {
               </>
             )}
             <View style={styles.pageContent}>
-              <View style={styles.topBar}>
-                <Pressable
-                  style={[styles.sidebarToggle, cursorPointer]}
-                  onPress={() => setSidebarVisible((v) => !v)}
-                  hitSlop={8}
-                >
-                  <Text style={styles.sidebarToggleIcon}>☰</Text>
-                </Pressable>
-
-                <View style={styles.brand}>
-                  <Logo size={48} />
-                  <Text style={styles.brandTitle}>Todo</Text>
-                </View>
-
-                <View style={styles.topBarSpacer} />
-              </View>
+              <Header onToggleSidebar={() => setSidebarVisible((v) => !v)} />
 
               <View style={styles.layout}>
                 {!isMobile && (
@@ -327,6 +312,9 @@ export default function App() {
                             style={styles.list}
                             contentContainerStyle={styles.listContent}
                           >
+                            {notes.length === 0 && (
+                              <Text style={styles.empty}>Aucune note pour le moment.</Text>
+                            )}
                             <View style={styles.notesGrid}>
                               {notes.map((note) => (
                                 <NoteCard
@@ -409,6 +397,8 @@ export default function App() {
 
                             {pointsError ? (
                               <ErrorState message={pointsError} onRetry={retryPoints} />
+                            ) : pointsLoading ? (
+                              <Text style={styles.empty}>Chargement...</Text>
                             ) : isTrashView ? (
                               <Text style={styles.empty}>
                                 Aucun point de suivi dans les éléments supprimés.
@@ -423,10 +413,10 @@ export default function App() {
                                   containerStyle={styles.listContainer}
                                   style={styles.list}
                                   contentContainerStyle={styles.listContent}
-                                  ListHeaderComponent={
-                                    pointsLoading ? (
-                                      <Text style={styles.empty}>Chargement...</Text>
-                                    ) : null
+                                  ListEmptyComponent={
+                                    <Text style={styles.empty}>
+                                      Aucun point de suivi pour le moment.
+                                    </Text>
                                   }
                                   renderItem={({ item, drag, isActive }: RenderItemParams<any>) => (
                                     <ScaleDecorator activeScale={1.01}>
@@ -510,27 +500,6 @@ const styles = StyleSheet.create({
     padding: 12,
     minHeight: 0,
   },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  brand: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  brandTitle: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: colors.textPrimary,
-    letterSpacing: 0.1,
-  },
-  topBarSpacer: {
-    width: 32,
-  },
   layout: {
     flex: 1,
     flexDirection: "row",
@@ -593,19 +562,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
-  },
-  sidebarToggle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: colors.panel,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadows.sm,
-  },
-  sidebarToggleIcon: {
-    fontSize: 18,
-    color: colors.textSecondary,
   },
   header: {
     fontSize: 20,

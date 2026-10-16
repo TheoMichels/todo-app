@@ -29,7 +29,7 @@
 - Point d'entrée stockage : `src/storage/index.ts`, `src/storage/db.ts`.
 
 ## Design
-- Tokens `src/theme/colors.ts` · dégradé pastel `#EAD6EE` `#A0F1EA` `#F5E6E8` `#D5E1FA` · brand `#072939` · accent `#5E5CE6` / `#7D7AFF` · textes `#072939` `#50646F` `#8B99A3`.
+- Tokens `src/theme/colors.ts` (canon stack-target §2) · dégradé 4 teintes · brand `#072939`, primary `#5E5CE6` · shadows/radius/spacing.
 
 ## Zones sensibles et déploiement
 - Vercel (`vercel.json`). Serveur : `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` (jamais en `EXPO_PUBLIC_`). Client mobile : `EXPO_PUBLIC_API_URL` facultatif.

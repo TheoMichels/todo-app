@@ -6,5 +6,9 @@ test.describe('Smoke test', () => {
     await page.waitForSelector('#root', { state: 'attached' });
     await expect(page.locator('#root')).toBeVisible();
     await expect(page.getByText('Todo').first()).toBeVisible();
+
+    const storageBadge = page.locator('[data-testid="storage-mode-badge"]');
+    await expect(storageBadge).toBeVisible();
+    await expect(storageBadge).toHaveText('Stockage local');
   });
 });
