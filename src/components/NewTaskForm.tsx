@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useState } from "react";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Priority } from "../types/todo";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
@@ -33,8 +40,21 @@ export function NewTaskForm({ onAdd }: Props) {
     }
   };
 
-  return (
-    <View style={styles.container}>
+  const isWeb = Platform.OS === "web";
+
+  const formContent = (
+    <>
+      {isWeb && (
+        <input
+          type="text"
+          name="prevent_autofill"
+          id="prevent_autofill"
+          style={{ display: "none" }}
+          tabIndex={-1}
+          aria-hidden="true"
+          autoComplete="off"
+        />
+      )}
       <TextInput
         id="new-task-title"
         nativeID="new-task-title"
@@ -46,6 +66,7 @@ export function NewTaskForm({ onAdd }: Props) {
         onChangeText={setTitle}
         onSubmitEditing={handleAdd}
         returnKeyType="done"
+        inputMode="text"
         autoComplete="off"
         textContentType="none"
         importantForAutofill="no"
@@ -69,8 +90,27 @@ export function NewTaskForm({ onAdd }: Props) {
           <Text style={styles.addButtonText}>Ajouter</Text>
         </Pressable>
       </View>
-    </View>
+    </>
   );
+
+  if (isWeb) {
+    return (
+      <form
+        style={styles.container as unknown as React.CSSProperties}
+        action="#"
+        method="get"
+        autoComplete="off"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleAdd();
+        }}
+      >
+        {formContent}
+      </form>
+    );
+  }
+
+  return <View style={styles.container}>{formContent}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -138,10 +178,6 @@ const styles = StyleSheet.create({
     color: colors.urgent,
     fontWeight: "600",
   },
-
-
-
-
   addButton: {
     flex: 1,
     backgroundColor: colors.accent,
@@ -156,5 +192,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 15,
   },
-
 });
