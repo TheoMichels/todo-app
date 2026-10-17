@@ -33,4 +33,4 @@
 
 ## Zones sensibles et déploiement
 - Vercel (`vercel.json`) + Supabase partagé (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`). `DIRECT_URL`/`DATABASE_URL` pour migrations.
-- Scripts d'icônes ad hoc à la racine (`*_icon*.py`, `fix_icons.py`) : hérités, préférer les skills logo.
+- Déploiement : `git push origin main` après validation du harness strict et accord utilisateur.

@@ -1,33 +1,37 @@
-# Todo App (Offline-First avec Upstash & Vercel)
+# Todo
 
-Cette application est basée sur une architecture "offline-first" (comme l'application congés) :
-- **Localement** : Les données sont stockées sur l'appareil à l'aide de `AsyncStorage`.
-- **En ligne (Production/Dev)** : Une API Vercel Serverless (`/api/db.ts`) synchronise les données vers une base de données **Upstash Redis**.
+Application personnelle de gestion de tâches par sections, notes et points de suivi, conçue en architecture offline-first.
 
-## Configuration locale
+## Architecture
 
-Pour démarrer le projet en local avec synchronisation vers l'API, copiez le fichier `.env.example` vers `.env` et ajustez les variables si besoin :
+- **Front-end** : Expo SDK 57, React Native Web 0.21, React 19, TypeScript strict.
+- **Stockage local (Offline-first)** : `AsyncStorage` validé par des schémas `zod` (`src/storage/`).
+- **Synchronisation Cloud & Auth** : Supabase PostgreSQL (instance partagée, schéma dédié `todo`, RLS sur toutes les tables) via `src/services/syncService.ts`.
+- **Base de données & Migrations** : Schéma `prisma/schema.prisma` multi-schémas et migrations SQL versionnées (`prisma/migrations/`).
+- **Déploiement** : Vercel (export statique PWA servi depuis `dist/`).
+
+## Commandes
+
+| Commande | Action |
+|---|---|
+| `npm run web` | Serveur de développement Expo Web (port 8081) |
+| `npm run build` | Export web statique pour production (`dist/`) |
+| `npm run preview` | Serveur de prévisualisation statique (port 4173) |
+| `npm run typecheck` | Vérification stricte des types TypeScript |
+| `npm run lint` | Linter Expo / ESLint |
+| `npm test` | Tests unitaires (logique, validations Zod, services) |
+| `npm run test:e2e` | Tests E2E Playwright |
+| `npm run db:deploy` | Déploiement des migrations Prisma directes sur Supabase |
+
+## Configuration des variables d'environnement
+
+Copiez `.env.example` vers `.env` ou `.env.local` :
 
 ```bash
 cp .env.example .env
 ```
-Contenu de base :
-```env
-EXPO_PUBLIC_API_URL=http://localhost:3000
-UPSTASH_REDIS_REST_URL=votre_url_upstash
-UPSTASH_REDIS_REST_TOKEN=votre_token_upstash
-```
 
-### Lancer l'application
-```bash
-npm install
-npm start
-```
-
-## Déploiement Vercel
-
-Lors du déploiement sur Vercel, assurez-vous de configurer les variables d'environnement suivantes dans les paramètres du projet Vercel :
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
-
-Les données seront automatiquement synchronisées entre le client React Native (Web/Mobile) et Upstash Redis via l'API Vercel (`api/db.ts`).
+Variables requises pour la synchronisation Supabase (automatiquement injectées sur Vercel) :
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `DATABASE_URL` / `DIRECT_URL` (uniquement pour l'exécution des migrations de base de données).
