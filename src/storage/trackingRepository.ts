@@ -71,9 +71,7 @@ export const trackingRepository: TrackingRepository = {
     return updated;
   },
   async remove(id: string) {
-    let all = await store.loadLocal();
-    all = all.filter((t) => t.id !== id);
-    await store.saveAll(all);
+    await store.remove(id);
   },
   async reorder(ids: string[]) {
     const all = await store.loadLocal();

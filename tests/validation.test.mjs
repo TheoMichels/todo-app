@@ -449,3 +449,114 @@ test('AC-01 legacy keys with heterogeneous legacy formats (dates ISO, nextDueDat
   assert.equal(typeof trackings[0].createdAt, 'number');
   assert.ok(seed.has('@todo_trackings_v1'));
 });
+
+test('AC-01 & AC-02 repository.remove invokes deleteItemFromCloud and cleans local store', async () => {
+  const deletedCloudCalls = [];
+  const seed = new Map();
+
+  const syncServicePath = path.resolve('src/services/syncService.ts');
+  const storageModePath = path.resolve('src/config/storageMode.ts');
+
+  const mocks = {
+    '@react-native-async-storage/async-storage': {
+      default: {
+        getItem: async (k) => seed.get(k) ?? null,
+        setItem: async (k, v) => seed.set(k, v),
+        removeItem: async (k) => seed.delete(k),
+      },
+      getItem: async (k) => seed.get(k) ?? null,
+      setItem: async (k, v) => seed.set(k, v),
+      removeItem: async (k) => seed.delete(k),
+    },
+    'expo-constants': {
+      default: { expoConfig: { extra: { storageMode: 'supabase' } } },
+    },
+    '../config/storageMode': {
+      isLocalMode: false,
+      storageMode: 'supabase',
+    },
+    '../services/syncService': {
+      deleteItemFromCloud: async (collection, id) => {
+        deletedCloudCalls.push({ collection, id });
+      },
+      syncCollectionToCloud: async () => {},
+      clearLocalCache: async () => {},
+    },
+  };
+
+  const loader = createTsLoader(mocks);
+  const sectionRepo = loader('src/storage/sectionRepository.ts').sectionRepository;
+  const todoRepo = loader('src/storage/todoRepository.ts').todoRepository;
+  const noteRepo = loader('src/storage/noteRepository.ts').noteRepository;
+  const trackingRepo = loader('src/storage/trackingRepository.ts').trackingRepository;
+
+  // 1. Sections
+  const sec = await sectionRepo.create('Section à supprimer');
+  assert.equal((await sectionRepo.list()).length, 1);
+  await sectionRepo.remove(sec.id);
+  assert.equal((await sectionRepo.list()).length, 0);
+  assert.ok(deletedCloudCalls.some((c) => c.collection === 'sections' && c.id === sec.id));
+
+  // 2. Todos
+  const todo = await todoRepo.create({ sectionId: 'sec-1', title: 'Todo à supprimer' });
+  assert.equal((await todoRepo.list()).length, 1);
+  await todoRepo.remove(todo.id);
+  assert.equal((await todoRepo.list()).length, 0);
+  assert.ok(deletedCloudCalls.some((c) => c.collection === 'todos' && c.id === todo.id));
+
+  // 3. Notes
+  const note = await noteRepo.create({ title: 'Note à supprimer' });
+  assert.equal((await noteRepo.list()).length, 1);
+  await noteRepo.remove(note.id);
+  assert.equal((await noteRepo.list()).length, 0);
+  assert.ok(deletedCloudCalls.some((c) => c.collection === 'notes' && c.id === note.id));
+
+  // 4. Trackings
+  const track = await trackingRepo.create({ sectionId: 'sec-1', title: 'Tracking à supprimer' });
+  assert.equal((await trackingRepo.list()).length, 1);
+  await trackingRepo.remove(track.id);
+  assert.equal((await trackingRepo.list()).length, 0);
+  assert.ok(deletedCloudCalls.some((c) => c.collection === 'trackings' && c.id === track.id));
+});
+
+test('AC-03 repository.remove succeeds locally even if remote deletion fails', async () => {
+  const seed = new Map();
+  const mocks = {
+    '@react-native-async-storage/async-storage': {
+      default: {
+        getItem: async (k) => seed.get(k) ?? null,
+        setItem: async (k, v) => seed.set(k, v),
+        removeItem: async (k) => seed.delete(k),
+      },
+      getItem: async (k) => seed.get(k) ?? null,
+      setItem: async (k, v) => seed.set(k, v),
+      removeItem: async (k) => seed.delete(k),
+    },
+    'expo-constants': {
+      default: { expoConfig: { extra: { storageMode: 'supabase' } } },
+    },
+    '../config/storageMode': {
+      isLocalMode: false,
+      storageMode: 'supabase',
+    },
+    '../services/syncService': {
+      deleteItemFromCloud: async () => {
+        throw new Error('Network error');
+      },
+      syncCollectionToCloud: async () => {},
+      clearLocalCache: async () => {},
+    },
+  };
+
+  const loader = createTsLoader(mocks);
+  const sectionRepo = loader('src/storage/sectionRepository.ts').sectionRepository;
+  const sec = await sectionRepo.create('Section offline');
+  assert.equal((await sectionRepo.list()).length, 1);
+  // Doit supprimer localement sans lever d'erreur
+  await assert.doesNotReject(async () => {
+    await sectionRepo.remove(sec.id);
+  });
+  assert.equal((await sectionRepo.list()).length, 0);
+});
+
+

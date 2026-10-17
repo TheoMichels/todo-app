@@ -61,6 +61,23 @@ export class OfflineStore<T extends { id: string }> {
     await this.syncRemote(items);
   }
 
+  async deleteRemote(id: string): Promise<void> {
+    if (isLocalMode) return;
+    try {
+      const { deleteItemFromCloud } = await import("../services/syncService");
+      await deleteItemFromCloud(this.collection, id);
+    } catch {
+      // Ignorer si la suppression échoue hors-ligne
+    }
+  }
+
+  async remove(id: string): Promise<void> {
+    const all = await this.loadLocal();
+    const filtered = all.filter((item) => item.id !== id);
+    await this.saveLocal(filtered);
+    await this.deleteRemote(id);
+  }
+
   async clearLocal(): Promise<void> {
     await this.saveLocal([]);
   }

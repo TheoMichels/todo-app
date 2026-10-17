@@ -45,8 +45,6 @@ export const sectionRepository: SectionRepository = {
     return updated;
   },
   async remove(id: string) {
-    const all = await store.loadLocal();
-    const filtered = all.filter((s) => s.id !== id);
-    await store.saveAll(filtered);
+    await store.remove(id);
   },
 };

@@ -56,8 +56,6 @@ export const noteRepository: NoteRepository = {
     return updated;
   },
   async remove(id: string) {
-    let all = await store.loadLocal();
-    all = all.filter((n) => n.id !== id);
-    await store.saveAll(all);
+    await store.remove(id);
   },
 };
