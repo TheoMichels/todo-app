@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { z } from "zod";
 import { supabase } from "./supabaseClient";
 import { getCurrentUser } from "./authService";
@@ -382,4 +383,20 @@ export async function deleteItemFromCloud(
   } catch (err) {
     console.warn("Échec de suppression cloud pour", collection, id, err);
   }
+}
+
+/**
+ * Nettoie toutes les collections locales de tâches, sections, notes et suivis.
+ * Appelé lors de la déconnexion en mode cloud pour éviter toute fuite de données résiduelles.
+ */
+export async function clearLocalCache(): Promise<void> {
+  const keys = [
+    ...Object.values(STORAGE_KEYS),
+    ...Object.values(LEGACY_KEYS),
+  ];
+  await Promise.all(
+    keys.map((k) =>
+      AsyncStorage.removeItem(k).catch(() => {})
+    )
+  );
 }

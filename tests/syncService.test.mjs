@@ -102,6 +102,9 @@ function setup({ local = false, remoteData = {}, failQuery = false } = {}) {
       setItem: async (key, val) => {
         memory.set(key, val);
       },
+      removeItem: async (key) => {
+        memory.delete(key);
+      },
     },
     './supabaseClient': { supabase: client },
     './authService': {
@@ -251,3 +254,21 @@ test('syncService gère le mode local (client null) sans crash', async () => {
   assert.equal(pullRes.success, false);
   assert.match(pullRes.error, /configur/i);
 });
+
+test('clearLocalCache purge l\'ensemble des 4 collections et clés legacy du cache local', async () => {
+  const { syncService, memory } = setup();
+  memory.set(keys.sections, JSON.stringify([validSection]));
+  memory.set(keys.todos, JSON.stringify([validTodo]));
+  memory.set(keys.notes, JSON.stringify([validNote]));
+  memory.set(keys.tracking_points, JSON.stringify([validTracking]));
+  memory.set('todo-app:sections', 'legacy-data');
+
+  await syncService.clearLocalCache();
+
+  assert.equal(memory.has(keys.sections), false);
+  assert.equal(memory.has(keys.todos), false);
+  assert.equal(memory.has(keys.notes), false);
+  assert.equal(memory.has(keys.tracking_points), false);
+  assert.equal(memory.has('todo-app:sections'), false);
+});
+

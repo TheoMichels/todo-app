@@ -94,6 +94,11 @@ function initAuth(): Promise<void> {
           });
           break;
         case "SIGNED_OUT":
+          if (!isLocalMode) {
+            import("../services/syncService")
+              .then(({ clearLocalCache }) => clearLocalCache())
+              .catch(() => {});
+          }
           setGlobalAuthState({
             session: null,
             user: null,
@@ -225,6 +230,15 @@ export function useAuth(): UseAuthReturn {
   const signOut = useCallback(async (): Promise<void> => {
     setGlobalAuthState({ isLoading: true, error: null });
     const res = await apiSignOut();
+
+    if (!isLocalMode) {
+      try {
+        const { clearLocalCache } = await import("../services/syncService");
+        await clearLocalCache();
+      } catch {
+        // Ignorer
+      }
+    }
 
     if (res.error) {
       const msg = res.error.message || "Erreur de déconnexion";

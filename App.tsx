@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-native-draggable-flatlist";
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   FlatList,
@@ -17,6 +18,10 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { isLocalMode } from "./src/config/storageMode";
+import { useAuth } from "./src/hooks/useAuth";
+import { AuthScreen } from "./src/components/AuthScreen";
+import { pullFromCloud } from "./src/services/syncService";
 import { useTodos } from "./src/hooks/useTodos";
 import { useSections } from "./src/hooks/useSections";
 import { useTrackingPoints } from "./src/hooks/useTrackingPoints";
@@ -49,7 +54,7 @@ const snapAnimationConfig = {
   restDisplacementThreshold: 10,
 };
 
-export default function App() {
+function AuthenticatedApp() {
   const {
     sections,
     loading: sectionsLoading,
@@ -616,4 +621,63 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 32,
     ...shadows.lg,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });
+
+export default function App(): React.JSX.Element {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const [isPulling, setIsPulling] = useState(false);
+  const lastPulledUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isLocalMode && isAuthenticated && user?.id) {
+      if (lastPulledUserIdRef.current === user.id) {
+        return;
+      }
+      lastPulledUserIdRef.current = user.id;
+      setIsPulling(true);
+      let cancelled = false;
+      pullFromCloud(user.id).finally(() => {
+        if (!cancelled) {
+          setIsPulling(false);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    } else if (!isAuthenticated) {
+      lastPulledUserIdRef.current = null;
+      setIsPulling(false);
+    }
+  }, [isAuthenticated, user?.id]);
+
+  if (!isLocalMode && (isLoading || (isAuthenticated && isPulling))) {
+    return (
+      <LinearGradient
+        colors={gradient.colors}
+        locations={gradient.locations}
+        start={gradient.start}
+        end={gradient.end}
+        style={styles.loadingContainer}
+      >
+        <StatusBar style="dark" />
+        <ActivityIndicator size="large" color={colors.primary} />
+      </LinearGradient>
+    );
+  }
+
+  if (!isLocalMode && !isAuthenticated) {
+    return (
+      <>
+        <StatusBar style="dark" />
+        <AuthScreen />
+      </>
+    );
+  }
+
+  return <AuthenticatedApp key={user?.id ?? "local"} />;
+}

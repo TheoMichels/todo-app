@@ -60,4 +60,13 @@ export class OfflineStore<T extends { id: string }> {
     await this.saveLocal(items);
     await this.syncRemote(items);
   }
+
+  async clearLocal(): Promise<void> {
+    await this.saveLocal([]);
+  }
+}
+
+export async function clearAllLocalStores(): Promise<void> {
+  const { clearLocalCache } = await import("../services/syncService");
+  await clearLocalCache();
 }
