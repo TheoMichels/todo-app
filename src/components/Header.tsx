@@ -97,7 +97,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
         </View>
       </View>
 
-      {!isLocalMode && (
+      {!isLocalMode && authModalVisible && (
         <AuthModal
           visible={authModalVisible}
           onClose={() => setAuthModalVisible(false)}

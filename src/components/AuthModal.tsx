@@ -155,6 +155,10 @@ export function AuthModal({ visible, onClose, onAuthSuccess }: AuthModalProps) {
     resetForm();
   };
 
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal
       visible={visible}
@@ -366,6 +370,9 @@ export function AuthModal({ visible, onClose, onAuthSuccess }: AuthModalProps) {
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Adresse Email</Text>
                     <TextInput
+                      id="auth-email"
+                      nativeID="auth-email"
+                      testID="auth-email-input"
                       style={styles.input}
                       placeholder="nom@exemple.com"
                       placeholderTextColor={colors.textMuted}
@@ -374,12 +381,18 @@ export function AuthModal({ visible, onClose, onAuthSuccess }: AuthModalProps) {
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
+                      autoComplete="email"
+                      textContentType="emailAddress"
+                      importantForAutofill="yes"
                     />
                   </View>
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Mot de passe</Text>
                     <TextInput
+                      id="auth-password"
+                      nativeID="auth-password"
+                      testID="auth-password-input"
                       style={styles.input}
                       placeholder="••••••••"
                       placeholderTextColor={colors.textMuted}
@@ -387,6 +400,9 @@ export function AuthModal({ visible, onClose, onAuthSuccess }: AuthModalProps) {
                       onChangeText={setPassword}
                       secureTextEntry
                       autoCapitalize="none"
+                      autoComplete={mode === "signIn" ? "current-password" : "new-password"}
+                      textContentType={mode === "signIn" ? "password" : "newPassword"}
+                      importantForAutofill="yes"
                     />
                   </View>
 
@@ -394,6 +410,9 @@ export function AuthModal({ visible, onClose, onAuthSuccess }: AuthModalProps) {
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>Confirmer le mot de passe</Text>
                       <TextInput
+                        id="auth-confirm-password"
+                        nativeID="auth-confirm-password"
+                        testID="auth-confirm-password-input"
                         style={styles.input}
                         placeholder="••••••••"
                         placeholderTextColor={colors.textMuted}
@@ -401,6 +420,9 @@ export function AuthModal({ visible, onClose, onAuthSuccess }: AuthModalProps) {
                         onChangeText={setConfirmPassword}
                         secureTextEntry
                         autoCapitalize="none"
+                        autoComplete="new-password"
+                        textContentType="newPassword"
+                        importantForAutofill="yes"
                       />
                     </View>
                   )}

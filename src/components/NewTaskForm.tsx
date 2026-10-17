@@ -36,6 +36,9 @@ export function NewTaskForm({ onAdd }: Props) {
   return (
     <View style={styles.container}>
       <TextInput
+        id="new-task-title"
+        nativeID="new-task-title"
+        testID="new-task-input"
         style={styles.input}
         placeholder="Ajouter une tâche..."
         placeholderTextColor={colors.textMuted}
@@ -43,6 +46,10 @@ export function NewTaskForm({ onAdd }: Props) {
         onChangeText={setTitle}
         onSubmitEditing={handleAdd}
         returnKeyType="done"
+        autoComplete="off"
+        textContentType="none"
+        importantForAutofill="no"
+        autoCorrect={false}
       />
 
       <View style={styles.controlsRow}>
