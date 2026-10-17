@@ -8,6 +8,7 @@ import { test as base, expect } from '@playwright/test';
  */
 const IGNORED: RegExp[] = [
   /Download the React DevTools/i,
+  /Failed to load resource: the server responded with a status of 400/i,
 ];
 
 type Fixtures = { consoleGuard: void };

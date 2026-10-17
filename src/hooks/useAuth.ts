@@ -177,19 +177,18 @@ export function useAuth(): UseAuthReturn {
 
   const signIn = useCallback(
     async (email: string, password: string): Promise<AuthActionResult> => {
-      setGlobalAuthState({ isLoading: true, error: null });
+      setGlobalAuthState({ error: null });
       const res = await apiSignIn(email, password);
 
       if (res.error) {
         const msg = res.error.message || "Erreur de connexion";
-        setGlobalAuthState({ isLoading: false, error: msg });
+        setGlobalAuthState({ error: msg });
         return { success: false, error: msg };
       }
 
       setGlobalAuthState({
         user: res.user,
         session: res.session,
-        isLoading: false,
         error: null,
       });
       return { success: true };
@@ -199,12 +198,12 @@ export function useAuth(): UseAuthReturn {
 
   const signUp = useCallback(
     async (email: string, password: string): Promise<AuthActionResult> => {
-      setGlobalAuthState({ isLoading: true, error: null });
+      setGlobalAuthState({ error: null });
       const res = await apiSignUp(email, password);
 
       if (res.error) {
         const msg = res.error.message || "Erreur lors de la création du compte";
-        setGlobalAuthState({ isLoading: false, error: msg });
+        setGlobalAuthState({ error: msg });
         return { success: false, error: msg };
       }
 
@@ -212,12 +211,10 @@ export function useAuth(): UseAuthReturn {
         setGlobalAuthState({
           user: res.user,
           session: res.session,
-          isLoading: false,
           error: null,
         });
       } else {
         setGlobalAuthState({
-          isLoading: false,
           error: null,
         });
       }
@@ -228,7 +225,7 @@ export function useAuth(): UseAuthReturn {
   );
 
   const signOut = useCallback(async (): Promise<void> => {
-    setGlobalAuthState({ isLoading: true, error: null });
+    setGlobalAuthState({ error: null });
     const res = await apiSignOut();
 
     if (!isLocalMode) {
@@ -242,12 +239,11 @@ export function useAuth(): UseAuthReturn {
 
     if (res.error) {
       const msg = res.error.message || "Erreur de déconnexion";
-      setGlobalAuthState({ isLoading: false, error: msg });
+      setGlobalAuthState({ error: msg });
     } else {
       setGlobalAuthState({
         user: null,
         session: null,
-        isLoading: false,
         error: null,
       });
     }

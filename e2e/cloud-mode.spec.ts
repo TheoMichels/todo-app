@@ -297,3 +297,40 @@ test('AC-S01/02 synchronisation push et pull dans AuthModal pour utilisateur con
   await page.getByText('Fermer', { exact: true }).click();
   await expect(page.getByText('Espace Cloud Synchronisé')).toHaveCount(0);
 });
+
+test('AC-07 mauvais mot de passe en mode cloud conserve AuthScreen, affiche l\'erreur et préserve l\'email', async ({ page }) => {
+  await serveRemoteBuild(page, 4174);
+
+  await page.route('https://synthetic.supabase.invalid/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.includes('/auth/v1/token')) {
+      await route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code: 'invalid_credentials',
+          message: 'Invalid login credentials',
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: 'null',
+    });
+  });
+
+  await page.goto('https://todo.example');
+  await expect(page.getByTestId('auth-screen')).toBeVisible();
+
+  await page.getByTestId('input-email').fill('test@example.com');
+  await page.getByTestId('input-password').fill('mauvaismdp');
+  await page.getByTestId('btn-submit').click();
+
+  // AuthScreen reste affiché, la bannière d'erreur apparaît et l'email est conservé
+  await expect(page.getByTestId('auth-screen')).toBeVisible();
+  await expect(page.getByTestId('auth-error-banner')).toBeVisible();
+  await expect(page.getByText('Adresse e-mail ou mot de passe incorrect.')).toBeVisible();
+  await expect(page.getByTestId('input-email')).toHaveValue('test@example.com');
+});
