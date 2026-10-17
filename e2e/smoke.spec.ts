@@ -11,4 +11,16 @@ test.describe('Smoke test', () => {
     await expect(storageBadge).toBeVisible();
     await expect(storageBadge).toHaveText('Stockage local');
   });
+
+  test('le champ de tâche a les attributs anti-autofill et aucun champ mot de passe n’est présent', async ({ page }) => {
+    await page.goto('/');
+    const taskInput = page.locator('[data-testid="new-task-input"]');
+    await expect(taskInput).toBeVisible();
+    await expect(taskInput).toHaveAttribute('autocomplete', 'off');
+    await expect(taskInput).toHaveAttribute('id', 'new-task-title');
+
+    // Vérifie qu'aucun champ mot de passe n'est présent dans le DOM
+    const passwordInputs = page.locator('input[type="password"]');
+    await expect(passwordInputs).toHaveCount(0);
+  });
 });
