@@ -268,13 +268,20 @@ export async function pullFromCloud(userId: string): Promise<SyncResult> {
     validate(NotesSchema, localNotes);
     validate(TrackingPointsSchema, localTrackings);
 
-    // 5. Remplacement des clés locales
+    // 5. Remplacement sain des clés locales avec les données cloud validées
     await Promise.all([
-      writeStored(STORAGE_KEYS.sections, SectionsSchema, localSections, LEGACY_KEYS.sections),
-      writeStored(STORAGE_KEYS.todos, TodosSchema, localTodos, LEGACY_KEYS.todos),
-      writeStored(STORAGE_KEYS.notes, NotesSchema, localNotes, LEGACY_KEYS.notes),
-      writeStored(STORAGE_KEYS.tracking_points, TrackingPointsSchema, localTrackings, LEGACY_KEYS.tracking_points),
+      writeStored(STORAGE_KEYS.sections, SectionsSchema, localSections, undefined, { overwrite: true }),
+      writeStored(STORAGE_KEYS.todos, TodosSchema, localTodos, undefined, { overwrite: true }),
+      writeStored(STORAGE_KEYS.notes, NotesSchema, localNotes, undefined, { overwrite: true }),
+      writeStored(STORAGE_KEYS.tracking_points, TrackingPointsSchema, localTrackings, undefined, { overwrite: true }),
     ]);
+
+    // 6. Nettoyage des anciennes clés legacy devenues inutiles
+    await Promise.all(
+      Object.values(LEGACY_KEYS).map((k) =>
+        AsyncStorage.removeItem(k).catch(() => {})
+      )
+    );
 
     return { success: true, message: "Données restaurées depuis le Cloud avec succès !" };
   } catch (error) {

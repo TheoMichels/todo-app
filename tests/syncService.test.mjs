@@ -272,3 +272,52 @@ test('clearLocalCache purge l\'ensemble des 4 collections et clés legacy du cac
   assert.equal(memory.has('todo-app:sections'), false);
 });
 
+test('AC-02 pullFromCloud écrase sainement le cache local et purge les clés legacy hétérogènes existantes', async () => {
+  const remoteSections = [
+    { id: 'sec-cloud-99', user_id: userId, name: 'Section Distante Cloud', created_at: '2026-10-17T10:00:00Z' },
+  ];
+  const remoteTodos = [
+    {
+      id: 'todo-cloud-99',
+      user_id: userId,
+      section_id: 'sec-cloud-99',
+      title: 'Tâche Cloud Supabase',
+      done: false,
+      priority: 'urgent',
+      order: 1,
+      created_at: '2026-10-17T10:00:00Z',
+    },
+  ];
+
+  const { syncService, memory } = setup({
+    remoteData: {
+      sections: remoteSections,
+      todos: remoteTodos,
+      notes: [],
+      tracking_points: [],
+    },
+  });
+
+  memory.set('todo-app:sections', JSON.stringify([{ id: 'sec-legacy', name: 'Vieille section', createdAt: '2023-01-01' }]));
+  memory.set('todo-app:todos', JSON.stringify([{ id: 't-leg', title: 'Vieux todo', createdAt: '2023-01-01' }]));
+  memory.set('todo-app:trackings', JSON.stringify([{ id: 'tr-leg', title: 'Vieux tracking', nextDueDate: '2025-01-01' }]));
+
+  const result = await syncService.pullFromCloud(userId);
+  assert.equal(result.success, true);
+  assert.match(result.message, /restaur/i);
+
+  const localSecs = JSON.parse(memory.get(keys.sections));
+  assert.equal(localSecs.length, 1);
+  assert.equal(localSecs[0].name, 'Section Distante Cloud');
+
+  const localTodos = JSON.parse(memory.get(keys.todos));
+  assert.equal(localTodos.length, 1);
+  assert.equal(localTodos[0].title, 'Tâche Cloud Supabase');
+  assert.equal(localTodos[0].priority, 'urgent');
+
+  assert.equal(memory.has('todo-app:sections'), false);
+  assert.equal(memory.has('todo-app:todos'), false);
+  assert.equal(memory.has('todo-app:trackings'), false);
+});
+
+

@@ -376,3 +376,76 @@ test('AC-04 invalid form inputs are rejected before persistence with French erro
   // Rien n'a été persisté
   assert.equal(seed.size, 0);
 });
+
+test('AC-01 legacy keys with heterogeneous legacy formats (dates ISO, nextDueDate, missing order/sectionId) are normalized and migrated to @todo_*_v1', async () => {
+  const heterogeneousSections = [
+    { id: 'sec-old', name: 'Historique ISO', createdAt: '2023-05-10T14:30:00.000Z' },
+  ];
+  const heterogeneousTodos = [
+    {
+      id: 'todo-old-1',
+      title: 'Tâche sans ordre ni date ms',
+      done: false,
+      createdAt: '2023-05-10T14:35:00.000Z',
+    },
+  ];
+  const heterogeneousNotes = [
+    {
+      id: 'note-old-1',
+      title: 'Note sans description',
+      createdAt: '2023-05-10T14:40:00.000Z',
+    },
+  ];
+  const heterogeneousTrackings = [
+    {
+      id: 'track-old-1',
+      title: 'Point de suivi ancien',
+      status: 'en_attente',
+      nextStep: 'Relancer',
+      nextDueDate: '2026-11-20T00:00:00.000Z',
+      createdAt: '2023-05-10T14:45:00.000Z',
+    },
+  ];
+
+  const seed = new Map([
+    ['todo-app:sections', JSON.stringify(heterogeneousSections)],
+    ['todo-app:todos', JSON.stringify(heterogeneousTodos)],
+    ['todo-app:notes', JSON.stringify(heterogeneousNotes)],
+    ['todo-app:trackings', JSON.stringify(heterogeneousTrackings)],
+  ]);
+
+  const { sectionRepo, todoRepo, noteRepo, trackingRepo } = getRepositories(seed);
+
+  const sections = await sectionRepo.list();
+  assert.equal(sections.length, 1);
+  assert.equal(sections[0].id, 'sec-old');
+  assert.equal(typeof sections[0].createdAt, 'number');
+  assert.ok(sections[0].createdAt > 0);
+  assert.ok(seed.has('@todo_sections_v1'));
+
+  const todos = await todoRepo.list();
+  assert.equal(todos.length, 1);
+  assert.equal(todos[0].title, 'Tâche sans ordre ni date ms');
+  assert.equal(todos[0].priority, 'standard');
+  assert.equal(typeof todos[0].order, 'number');
+  assert.ok(Number.isFinite(todos[0].order));
+  assert.equal(typeof todos[0].createdAt, 'number');
+  assert.ok(todos[0].sectionId.length > 0);
+  assert.ok(seed.has('@todo_todos_v1'));
+
+  const notes = await noteRepo.list();
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].title, 'Note sans description');
+  assert.equal(notes[0].description, '');
+  assert.equal(typeof notes[0].createdAt, 'number');
+  assert.ok(seed.has('@todo_notes_v1'));
+
+  const trackings = await trackingRepo.list();
+  assert.equal(trackings.length, 1);
+  assert.equal(trackings[0].title, 'Point de suivi ancien');
+  assert.equal(trackings[0].dueDate, '2026-11-20');
+  assert.equal(typeof trackings[0].order, 'number');
+  assert.ok(trackings[0].sectionId.length > 0);
+  assert.equal(typeof trackings[0].createdAt, 'number');
+  assert.ok(seed.has('@todo_trackings_v1'));
+});
