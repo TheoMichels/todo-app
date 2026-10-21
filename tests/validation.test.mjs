@@ -194,6 +194,24 @@ test('AC-02 TrackingPointSchema handles valid, partial (optional dueDate, defaul
 // AC-04: Storage & Repositories (Corruption, Migration, CRUD)
 // -------------------------------------------------------------
 
+test('AC-04 new todos are persisted first within their section and priority group', async () => {
+  const existing = [
+    { id: 'urgent-old', sectionId: 's1', title: 'Urgente existante', done: false, priority: 'urgent', order: 2, createdAt: 100 },
+    { id: 'standard-old', sectionId: 's1', title: 'Standard existante', done: false, priority: 'standard', order: 1, createdAt: 100 },
+  ];
+  const seed = new Map([['@todo_todos_v1', JSON.stringify(existing)]]);
+  const { todoRepo } = getRepositories(seed);
+
+  const standard = await todoRepo.create({ sectionId: 's1', title: 'Nouveau standard' });
+  const urgent = await todoRepo.create({ sectionId: 's1', title: 'Nouvelle urgente', priority: 'urgent' });
+  const reloaded = await todoRepo.list();
+
+  assert.ok(standard.order < 1);
+  assert.ok(urgent.order < 2);
+  assert.equal(reloaded.find((todo) => todo.id === standard.id)?.order, standard.order);
+  assert.equal(reloaded.find((todo) => todo.id === urgent.id)?.order, urgent.order);
+});
+
 test('AC-04 corrupted storage rejects reads and writes without altering existing bytes', async () => {
   const corruptedValues = ['{', '{}', '[{"id": 123}]', 'null'];
 

@@ -40,14 +40,21 @@ export function useTodos(sectionId: string | undefined) {
 
       const newId = Math.random().toString(36).substring(2, 9);
       const currentTodos = todosRef.current;
-      const maxOrder = currentTodos.reduce((max, t) => Math.max(max, t.order ?? 0), 0);
+      const priority = options?.priority ?? "standard";
+      const groupTodos = currentTodos.filter(
+        (todo) => todo.sectionId === sectionId && todo.priority === priority
+      );
+      const minOrder = groupTodos.reduce(
+        (min, todo) => Math.min(min, todo.order ?? 0),
+        0
+      );
       const optimisticTodo: Todo = {
         id: newId,
         sectionId,
         title: trimmed,
         done: false,
-        priority: options?.priority ?? "standard",
-        order: maxOrder + 1,
+        priority,
+        order: minOrder - 1,
         createdAt: Date.now(),
       };
 

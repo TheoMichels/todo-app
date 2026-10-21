@@ -45,14 +45,18 @@ export const todoRepository: TodoRepository = {
   async create(input) {
     validate(TodoInputSchema, input);
     const all = await store.loadLocal();
-    const maxOrder = all.reduce((max, t) => Math.max(max, t.order ?? 0), 0);
+    const priority = input.priority ?? "standard";
+    const groupTodos = all.filter(
+      (todo) => todo.sectionId === input.sectionId && todo.priority === priority
+    );
+    const minOrder = groupTodos.reduce((min, todo) => Math.min(min, todo.order ?? 0), 0);
     const newTodo: Todo = {
       id: input.id ?? Math.random().toString(36).substring(2, 9),
       sectionId: input.sectionId,
       title: input.title.trim(),
       done: false,
-      priority: input.priority ?? "standard",
-      order: input.order ?? maxOrder + 1,
+      priority,
+      order: input.order ?? minOrder - 1,
       createdAt: input.createdAt ?? Date.now(),
     };
     validate(TodoSchema, newTodo);
