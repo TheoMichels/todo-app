@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { Priority } from "../types/todo";
-import { colors } from "../theme/colors";
+import { colors, spacing } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -115,13 +115,15 @@ export function NewTaskForm({ onAdd }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    display: "flex",
+    flexDirection: "column",
     marginBottom: 24,
-    gap: 12,
   },
   controlsRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    marginTop: spacing.md,
   },
   input: {
     width: "100%",
