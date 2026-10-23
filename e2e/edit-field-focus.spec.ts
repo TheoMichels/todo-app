@@ -4,14 +4,15 @@ async function expectFocusGutter(input: import('@playwright/test').Locator, marg
   await input.focus();
   const gutter = await input.evaluate((element) => {
     let ancestor = element.parentElement;
+    let marginLeft: string | undefined;
+    let paddingLeft: string | undefined;
     while (ancestor) {
       const style = getComputedStyle(ancestor);
-      if (style.marginLeft !== '0px' || style.paddingLeft !== '0px') {
-        return { margin: style.marginLeft, padding: style.paddingLeft };
-      }
+      if (style.marginLeft !== '0px') marginLeft = style.marginLeft;
+      if (style.paddingLeft !== '0px') paddingLeft = style.paddingLeft;
       ancestor = ancestor.parentElement;
     }
-    return null;
+    return { margin: marginLeft, padding: paddingLeft };
   });
   expect(gutter).toEqual({ margin, padding });
 }
