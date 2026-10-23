@@ -44,15 +44,5 @@ test('les champs d’édition gardent une marge visible dans leurs listes défil
   await page.getByText('✎').last().click();
   const renameInput = page.locator('input').last();
   await expectFocusGutter(renameInput, '12px');
-  const topGutter = await renameInput.evaluate((element) => {
-    let ancestor = element.parentElement;
-    const paddings: string[] = [];
-    while (ancestor) {
-      const paddingTop = getComputedStyle(ancestor).paddingTop;
-      if (paddingTop !== '0px') paddings.push(paddingTop);
-      ancestor = ancestor.parentElement;
-    }
-    return paddings;
-  });
-  expect(topGutter).toContain('4px');
+  await expect(renameInput).toHaveCSS('margin-top', '4px');
 });

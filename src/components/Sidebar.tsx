@@ -267,7 +267,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 4,
   },
   item: {
     flexDirection: "row",
@@ -364,6 +363,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     color: colors.textPrimary,
     fontSize: 14,
+    marginTop: 4,
     marginBottom: 4,
   },
   manageIconsRow: {
