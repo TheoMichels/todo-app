@@ -25,6 +25,7 @@ test('les champs d’édition gardent une marge visible dans leurs listes défil
   // Le panneau détail est le seul panneau positionné au-dessus de l’écran.
   const taskPanelInput = page.locator('input').last();
   await expectFocusGutter(taskPanelInput, '24px');
+  await page.getByText('✕').last().click();
 
   await page.getByText('+ Nouveau', { exact: true }).click();
   const trackingTitle = page.getByPlaceholder('Ex : Livraison dépendance équipe A');
@@ -33,6 +34,7 @@ test('les champs d’édition gardent une marge visible dans leurs listes défil
   await page.getByText('Point de test', { exact: true }).click();
   const trackingInput = page.locator('input').last();
   await expectFocusGutter(trackingInput, '24px');
+  await page.getByText('✕').last().click();
 
   await page.getByText('+ Nouvelle Section', { exact: true }).click();
   const sectionInput = page.getByPlaceholder('Nom de la section');
