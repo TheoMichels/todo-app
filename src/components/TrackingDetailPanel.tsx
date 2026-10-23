@@ -49,7 +49,11 @@ export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
         </Pressable>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.fieldsScroll}
+        contentContainerStyle={styles.fieldsContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.fieldLabel}>Titre</Text>
         <TextInput
           style={styles.titleInput}
@@ -105,6 +109,12 @@ export function TrackingDetailPanel({ point, onChange, onClose }: Props) {
 }
 
 const styles = StyleSheet.create({
+  fieldsScroll: {
+    marginHorizontal: -24,
+  },
+  fieldsContent: {
+    paddingHorizontal: 24,
+  },
   panel: {
     flex: 1,
     borderRadius: 24,
