@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Section } from "../types/section";
 import { sectionRepository } from "../storage";
+import { isLocalMode } from "../config/storageMode";
 
 export function useSections() {
   const [sections, setSections] = useState<Section[]>([]);
@@ -12,7 +13,7 @@ export function useSections() {
     setError(null);
     try {
       const loaded = await sectionRepository.list();
-      if (loaded.length === 0) {
+      if (loaded.length === 0 && isLocalMode) {
         const defaultSection = await sectionRepository.create("Général");
         setSections([defaultSection]);
       } else {
