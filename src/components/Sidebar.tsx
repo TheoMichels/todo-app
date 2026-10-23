@@ -61,7 +61,7 @@ export function Sidebar({ sections, todoCounts = {}, selectedId, onSelect, onAdd
 
       <ScrollView
         style={styles.list}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, editingId && styles.listContentEditing]}
         showsVerticalScrollIndicator={false}
       >
         {sections.map((section) => {
@@ -268,6 +268,9 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
   },
+  listContentEditing: {
+    paddingTop: 8,
+  },
   item: {
     flexDirection: "row",
     alignItems: "center",
@@ -363,7 +366,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     color: colors.textPrimary,
     fontSize: 14,
-    marginTop: 4,
     marginBottom: 4,
   },
   manageIconsRow: {
