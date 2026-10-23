@@ -59,7 +59,11 @@ export function Sidebar({ sections, todoCounts = {}, selectedId, onSelect, onAdd
         )}
       </View>
 
-      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      >
         {sections.map((section) => {
           const selected = section.id === selectedId;
 
@@ -259,6 +263,10 @@ const styles = StyleSheet.create({
   list: {
     flexGrow: 1,
     marginBottom: 12,
+    marginHorizontal: -16,
+  },
+  listContent: {
+    paddingHorizontal: 16,
   },
   item: {
     flexDirection: "row",
