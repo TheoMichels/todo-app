@@ -288,6 +288,53 @@ test('AC-09 erreur du pull cloud reste bloquante et Réessayer autorise le charg
   expect(sectionPulls).toBe(2);
 });
 
+test('AC-10 une reconnexion du même utilisateur attend un nouveau pull', async ({ page }) => {
+  await serveRemoteBuild(page, 4174);
+  await cloudSession(page);
+  let sectionPulls = 0;
+  let releaseSecondPull!: () => void;
+  const secondPull = new Promise<void>((resolve) => { releaseSecondPull = resolve; });
+  await page.route('https://synthetic.supabase.invalid/**', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (url.pathname.includes('/auth/v1/logout')) {
+      await route.fulfill({ status: 204, body: '' });
+      return;
+    }
+    if (url.pathname.startsWith('/auth/')) {
+      if (url.pathname.includes('/token')) {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+          access_token: 'synthetic-access-token', token_type: 'bearer', expires_in: 3600,
+          refresh_token: 'synthetic-refresh-token', user: syntheticUser,
+        }) });
+      } else {
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(syntheticUser) });
+      }
+      return;
+    }
+    if (request.method() === 'GET' && url.pathname.endsWith('/sections')) {
+      sectionPulls += 1;
+      if (sectionPulls === 2) await secondPull;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '[]' });
+  });
+
+  await page.goto('https://todo.example');
+  await expect(page.getByLabel('Gérer mon compte et synchronisation')).toBeVisible();
+  await page.getByLabel('Se déconnecter', { exact: true }).click();
+  await expect(page.getByTestId('auth-screen')).toBeVisible();
+  await page.getByTestId('input-email').fill('test@example.com');
+  await page.getByTestId('input-password').fill('secret123');
+  await page.getByTestId('btn-submit').click();
+
+  await expect(page.getByTestId('auth-screen')).toHaveCount(0);
+  await expect(page.getByLabel('Gérer mon compte et synchronisation')).toHaveCount(0);
+  await expect(page.getByTestId('cloud-pull-error')).toHaveCount(0);
+  releaseSecondPull();
+  await expect(page.getByLabel('Gérer mon compte et synchronisation')).toBeVisible();
+  expect(sectionPulls).toBe(2);
+});
+
 test('AC-S01/02 synchronisation push et pull dans AuthModal pour utilisateur connecté', async ({ page }) => {
   await serveRemoteBuild(page, 4174);
   await cloudSession(page);

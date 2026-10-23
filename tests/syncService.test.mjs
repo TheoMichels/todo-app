@@ -37,7 +37,7 @@ const validTracking = {
   createdAt: 1700000000000,
 };
 
-function setup({ local = false, remoteData = {}, failQuery = false } = {}) {
+function setup({ local = false, remoteData = {}, failQuery = false, selectBehavior } = {}) {
   const memory = new Map();
   const remote = {
     sections: remoteData.sections ? [...remoteData.sections] : [],
@@ -57,6 +57,8 @@ function setup({ local = false, remoteData = {}, failQuery = false } = {}) {
           }),
         },
         from(table) {
+          const selectedData = [...remote[table]];
+          let abortSignal;
           const query = {
             select() {
               return query;
@@ -65,6 +67,10 @@ function setup({ local = false, remoteData = {}, failQuery = false } = {}) {
               return query;
             },
             order() {
+              return query;
+            },
+            abortSignal(signal) {
+              abortSignal = signal;
               return query;
             },
             async upsert(rows) {
@@ -86,10 +92,13 @@ function setup({ local = false, remoteData = {}, failQuery = false } = {}) {
             },
             then(resolve, reject) {
               calls.push({ action: 'select', table });
+              if (selectBehavior) {
+                return selectBehavior({ table, data: selectedData, signal: abortSignal, resolve, reject });
+              }
               if (failQuery) {
                 return Promise.resolve({ data: null, error: { message: 'Network error' } }).then(resolve, reject);
               }
-              return Promise.resolve({ data: remote[table], error: null }).then(resolve, reject);
+              return Promise.resolve({ data: selectedData, error: null }).then(resolve, reject);
             },
           };
           return query;
@@ -114,6 +123,42 @@ function setup({ local = false, remoteData = {}, failQuery = false } = {}) {
 
   return { syncService, memory, remote, calls };
 }
+
+test('pullFromCloud ignore la réponse obsolète d’un pull annulé après le succès du plus récent', async () => {
+  let queryCount = 0;
+  const firstPullResolvers = [];
+  let firstPullStarted;
+  const firstPullReady = new Promise((resolve) => { firstPullStarted = resolve; });
+  const { syncService, memory, remote } = setup({
+    remoteData: {
+      sections: [{ id: 'old', user_id: userId, name: 'Ancienne', created_at: '2026-01-01T00:00:00Z' }],
+    },
+    selectBehavior: ({ table, data, resolve }) => {
+      queryCount += 1;
+      if (queryCount <= 4) {
+        firstPullResolvers.push(() => resolve({ data, error: null }));
+        if (firstPullResolvers.length === 4) firstPullStarted();
+        return new Promise(() => {});
+      }
+      return Promise.resolve({ data: remote[table], error: null }).then(resolve);
+    },
+  });
+
+  const obsoleteController = new AbortController();
+  const obsoletePull = syncService.pullFromCloud(userId, obsoleteController.signal);
+  await firstPullReady;
+  remote.sections = [{ id: 'new', user_id: userId, name: 'Récente', created_at: '2026-01-02T00:00:00Z' }];
+
+  const currentPull = await syncService.pullFromCloud(userId);
+  assert.equal(currentPull.success, true, currentPull.error);
+  assert.equal(JSON.parse(memory.get(keys.sections))[0].name, 'Récente');
+
+  obsoleteController.abort();
+  firstPullResolvers.forEach((resolve) => resolve());
+  const obsoleteResult = await obsoletePull;
+  assert.equal(obsoleteResult.success, false);
+  assert.equal(JSON.parse(memory.get(keys.sections))[0].name, 'Récente');
+});
 
 test('pushToCloud sauvegarde les 4 collections locales vers Supabase avec validation', async () => {
   const { syncService, memory, remote, calls } = setup();

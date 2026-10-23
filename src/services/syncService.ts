@@ -89,6 +89,16 @@ const syncError = () =>
     "Synchronisation impossible. Vos modifications sont conservées dans le cache local ; réessayez lorsque la connexion est rétablie."
   );
 
+let pullCacheWriteQueue: Promise<void> = Promise.resolve();
+
+function throwIfPullAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new Error("Récupération cloud annulée.");
+}
+
+function withPullSignal<T>(query: T & { abortSignal: (signal: AbortSignal) => T }, signal?: AbortSignal): T {
+  return signal ? query.abortSignal(signal) : query;
+}
+
 async function resolveUserId(userId?: string): Promise<string> {
   const id = userId ?? (await getCurrentUser())?.id;
   if (!id) throw new Error("Connectez-vous pour synchroniser vos données.");
@@ -198,7 +208,7 @@ export async function pushToCloud(userId: string): Promise<SyncResult> {
  * Récupère les données depuis Supabase et met à jour le cache local.
  * L'intégralité des données distantes est validée avec Zod AVANT d'écraser le cache local.
  */
-export async function pullFromCloud(userId: string): Promise<SyncResult> {
+export async function pullFromCloud(userId: string, signal?: AbortSignal): Promise<SyncResult> {
   if (!supabase) {
     return {
       success: false,
@@ -207,16 +217,18 @@ export async function pullFromCloud(userId: string): Promise<SyncResult> {
   }
 
   try {
+    throwIfPullAborted(signal);
     const uid = await resolveUserId(userId);
-
+    throwIfPullAborted(signal);
     // 1. Récupération parallèle des 4 collections distantes
     const [secRes, todoRes, noteRes, trackRes] = await Promise.all([
-      supabase.from("sections").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
-      supabase.from("todos").select("*").eq("user_id", uid).order("order", { ascending: true }),
-      supabase.from("notes").select("*").eq("user_id", uid).order("created_at", { ascending: true }),
-      supabase.from("tracking_points").select("*").eq("user_id", uid).order("order", { ascending: true }),
+      withPullSignal(supabase.from("sections").select("*").eq("user_id", uid).order("created_at", { ascending: true }), signal),
+      withPullSignal(supabase.from("todos").select("*").eq("user_id", uid).order("order", { ascending: true }), signal),
+      withPullSignal(supabase.from("notes").select("*").eq("user_id", uid).order("created_at", { ascending: true }), signal),
+      withPullSignal(supabase.from("tracking_points").select("*").eq("user_id", uid).order("order", { ascending: true }), signal),
     ]);
 
+    throwIfPullAborted(signal);
     if (secRes.error || todoRes.error || noteRes.error || trackRes.error) {
       throw syncError();
     }
@@ -268,13 +280,22 @@ export async function pullFromCloud(userId: string): Promise<SyncResult> {
     validate(NotesSchema, localNotes);
     validate(TrackingPointsSchema, localTrackings);
 
-    // 5. Remplacement sain des clés locales avec les données cloud validées
-    await Promise.all([
-      writeStored(STORAGE_KEYS.sections, SectionsSchema, localSections, undefined, { overwrite: true }),
-      writeStored(STORAGE_KEYS.todos, TodosSchema, localTodos, undefined, { overwrite: true }),
-      writeStored(STORAGE_KEYS.notes, NotesSchema, localNotes, undefined, { overwrite: true }),
-      writeStored(STORAGE_KEYS.tracking_points, TrackingPointsSchema, localTrackings, undefined, { overwrite: true }),
-    ]);
+    // Serialize cache replacements so a newer pull always writes after an older one.
+    let releaseWriteQueue!: () => void;
+    const previousWrite = pullCacheWriteQueue;
+    pullCacheWriteQueue = new Promise<void>((resolve) => { releaseWriteQueue = resolve; });
+    await previousWrite;
+    try {
+      throwIfPullAborted(signal);
+      await Promise.all([
+        writeStored(STORAGE_KEYS.sections, SectionsSchema, localSections, undefined, { overwrite: true }),
+        writeStored(STORAGE_KEYS.todos, TodosSchema, localTodos, undefined, { overwrite: true }),
+        writeStored(STORAGE_KEYS.notes, NotesSchema, localNotes, undefined, { overwrite: true }),
+        writeStored(STORAGE_KEYS.tracking_points, TrackingPointsSchema, localTrackings, undefined, { overwrite: true }),
+      ]);
+    } finally {
+      releaseWriteQueue();
+    }
 
     // 6. Nettoyage des anciennes clés legacy devenues inutiles
     await Promise.all(
