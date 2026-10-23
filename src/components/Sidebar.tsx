@@ -267,6 +267,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
+    paddingTop: 4,
   },
   item: {
     flexDirection: "row",
