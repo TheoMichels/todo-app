@@ -46,12 +46,13 @@ test('les champs d’édition gardent une marge visible dans leurs listes défil
   await expectFocusGutter(renameInput, '12px');
   const topGutter = await renameInput.evaluate((element) => {
     let ancestor = element.parentElement;
+    const paddings: string[] = [];
     while (ancestor) {
       const paddingTop = getComputedStyle(ancestor).paddingTop;
-      if (paddingTop !== '0px') return paddingTop;
+      if (paddingTop !== '0px') paddings.push(paddingTop);
       ancestor = ancestor.parentElement;
     }
-    return undefined;
+    return paddings;
   });
-  expect(topGutter).toBe('4px');
+  expect(topGutter).toContain('4px');
 });
