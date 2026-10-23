@@ -45,6 +45,21 @@ import { NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
 // Matches Sidebar's own width (200) + marginRight (12).
 const SIDEBAR_TOTAL_WIDTH = 212;
 
+function sessionKeyFromAccessToken(token?: string, fallback?: string): string | null {
+  const payload = token?.split(".")[1];
+  if (payload) {
+    try {
+      const encoded = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = encoded.padEnd(Math.ceil(encoded.length / 4) * 4, "=");
+      const claims = JSON.parse(atob(padded)) as { session_id?: unknown };
+      if (typeof claims.session_id === "string") return claims.session_id;
+    } catch {
+      // Use the refresh token as a conservative fallback if the JWT cannot be decoded.
+    }
+  }
+  return fallback ?? null;
+}
+
 const snapAnimationConfig = {
   damping: 20,
   mass: 0.01,
@@ -625,37 +640,88 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 24,
+  },
+  cloudPullErrorText: {
+    color: colors.textPrimary,
+    textAlign: "center",
+    maxWidth: 420,
+    marginBottom: 16,
+  },
+  cloudPullRetryButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  cloudPullRetryText: {
+    color: colors.textPrimary,
+    fontWeight: "600",
   },
 });
 
 export default function App(): React.JSX.Element {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const [isPulling, setIsPulling] = useState(false);
-  const lastPulledUserIdRef = useRef<string | null>(null);
+  const { isAuthenticated, isLoading, user, session } = useAuth();
+  const sessionKey = sessionKeyFromAccessToken(session?.access_token, session?.refresh_token);
+  const [pullAttempt, setPullAttempt] = useState(0);
+  const [pullState, setPullState] = useState<{
+    userId: string;
+    sessionKey: string;
+    status: "loading" | "ready" | "error";
+    error?: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (!isLocalMode && isAuthenticated && user?.id) {
-      if (lastPulledUserIdRef.current === user.id) {
-        return;
-      }
-      lastPulledUserIdRef.current = user.id;
-      setIsPulling(true);
+    if (!isLocalMode && isAuthenticated && user?.id && sessionKey) {
       let cancelled = false;
-      pullFromCloud(user.id).finally(() => {
+      const controller = new AbortController();
+      const userId = user.id;
+      setPullState({ userId, sessionKey, status: "loading" });
+      pullFromCloud(userId, controller.signal).then((result) => {
         if (!cancelled) {
-          setIsPulling(false);
+          setPullState(result.success
+            ? { userId, sessionKey, status: "ready" }
+            : { userId, sessionKey, status: "error", error: result.error ?? "La récupération des données a échoué." });
+        }
+      }).catch((error: unknown) => {
+        if (!cancelled) {
+          setPullState({
+            userId,
+            sessionKey,
+            status: "error",
+            error: error instanceof Error ? error.message : "La récupération des données a échoué.",
+          });
         }
       });
       return () => {
         cancelled = true;
+        controller.abort();
       };
-    } else if (!isAuthenticated) {
-      lastPulledUserIdRef.current = null;
-      setIsPulling(false);
     }
-  }, [isAuthenticated, user?.id]);
+    setPullState(null);
+  }, [isAuthenticated, pullAttempt, sessionKey, user?.id]);
 
-  if (!isLocalMode && (isLoading || (isAuthenticated && isPulling))) {
+  const currentPull = user?.id && sessionKey && pullState?.userId === user.id && pullState.sessionKey === sessionKey
+    ? pullState
+    : null;
+  if (!isLocalMode && (isLoading || (isAuthenticated && currentPull?.status !== "ready"))) {
+    if (isAuthenticated && currentPull?.status === "error") {
+      return (
+        <View style={styles.loadingContainer} testID="cloud-pull-error">
+          <StatusBar style="dark" />
+          <Text style={styles.cloudPullErrorText}>
+            Impossible de charger les données depuis le Cloud. {currentPull.error}
+          </Text>
+          <Pressable
+            style={[styles.cloudPullRetryButton, cursorPointer]}
+            testID="cloud-pull-retry"
+            onPress={() => setPullAttempt((attempt) => attempt + 1)}
+          >
+            <Text style={styles.cloudPullRetryText}>Réessayer</Text>
+          </Pressable>
+        </View>
+      );
+    }
     return (
       <LinearGradient
         colors={gradient.colors}

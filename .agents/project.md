@@ -8,7 +8,7 @@
 ## Stack
 - Expo SDK 57 (RN Web 0.21, React 19.2, RN 0.86), TS. Expo 57 récent : en cas de doute sur une API, consulter https://docs.expo.dev/versions/v57.0.0/ pour l'API concernée uniquement.
 - `@supabase/supabase-js`, `expo-linear-gradient`, `react-native-svg`, `react-native-reanimated`, `react-native-gesture-handler`, `react-native-draggable-flatlist`.
-- Offline-first : AsyncStorage localement (validation `zod`) ; synchro Supabase (schéma `todo`) via `src/services/syncService.ts`.
+- Mode cloud : écran monté après pull Supabase réussi ; échec bloquant avec retry, liste vide sans section automatique. Mode local : AsyncStorage ; repositories cloud utilisent le cache après restauration.
 - Schéma : multiSchema Prisma (`todo`, `auth`) ; types `Database` dans `src/types/database.ts` ; Zod dans `src/types/schemas.ts`.
 
 ## Commandes
