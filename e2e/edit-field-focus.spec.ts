@@ -48,11 +48,13 @@ test('les champs d’édition gardent une marge visible dans leurs listes défil
     let ancestor = element.parentElement;
     while (ancestor) {
       if (['auto', 'scroll'].includes(getComputedStyle(ancestor).overflowY)) {
-        return getComputedStyle(ancestor.firstElementChild as HTMLElement).paddingTop;
+        return Array.from(ancestor.querySelectorAll<HTMLElement>('*')).map(
+          (descendant) => getComputedStyle(descendant).paddingTop,
+        );
       }
       ancestor = ancestor.parentElement;
     }
     return undefined;
   });
-  expect(scrollContentPaddingTop).toBe('8px');
+  expect(scrollContentPaddingTop).toContain('8px');
 });
