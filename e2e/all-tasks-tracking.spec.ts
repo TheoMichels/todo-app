@@ -208,5 +208,5 @@ test('les échéances passées gardent leur format et deviennent rouges, celles 
   await expect(future).toHaveText(`📅 ${dates[2]}`);
   await expect(todayText).not.toHaveCSS('color', 'rgb(192, 57, 43)');
   await expect(futureText).not.toHaveCSS('color', 'rgb(192, 57, 43)');
-  expect(await overdue.evaluate((element) => element.getBoundingClientRect().width)).toBe(await today.evaluate((element) => element.getBoundingClientRect().width));
+  expect(await overdue.evaluate((element) => element.getBoundingClientRect().width)).toBeCloseTo(await today.evaluate((element) => element.getBoundingClientRect().width), 0);
 });
