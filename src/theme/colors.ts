@@ -79,8 +79,8 @@ export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
 
 // Fonds opaques pour conserver le contraste des noms de section.
 export const sectionBadgeColors = [
-  "#DCEBFA", "#E8DDF8", "#D7F1E5", "#FCE4CF", "#F9DEE8", "#E8EBCB", "#D7EFF1", "#F2E3D5",
-  "#DDE2FF", "#F4DEF8", "#D8F2D0", "#FFF0C9", "#FADBD5", "#E2E6D4", "#CDEBE6", "#EFE0CC",
+  "#C9E0F5", "#DCCCF0", "#BFE8D4", "#F6D2B2", "#F2C7D8", "#DDE3B0", "#BFE3E7", "#E8D0B8",
+  "#C9D1FA", "#E9C9EF", "#C4E6B5", "#F3E0A8", "#F0C2B8", "#D3DBC1", "#B8DED5", "#E3CFB6",
 ];
 
 // Le tri rend l’attribution indépendante de l’ordre de chargement des sections.
