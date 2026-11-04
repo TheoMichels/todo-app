@@ -89,6 +89,10 @@ export function TodoItem({
           )}
 
           <Pressable
+            testID="todo-toggle"
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isChecked }}
+            accessibilityLabel={`Terminer ${todo.title}`}
             style={[styles.checkbox, cursorPointer]}
             onPress={handleToggle}
             hitSlop={8}

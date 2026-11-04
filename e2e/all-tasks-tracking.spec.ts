@@ -39,14 +39,41 @@ test('Tous regroupe les éléments, impose une section et conserve les création
   await expect(page.getByText('Suivi tous', { exact: true })).toBeVisible();
 });
 
-test('Tous reste utilisable sans sections sur mobile', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
+test('les tâches terminées et les suivis supprimés quittent Tous', async ({ page }) => {
   await page.goto('/');
-  // La suppression de la dernière section laisse la vue vide dans la session.
-  await page.getByTestId('toggle-sidebar').click();
-  await page.getByText('Gérer sections').click();
-  await page.getByTestId('delete-section').first().click();
+  await page.getByTestId('new-task-input').fill('Tâche à terminer');
+  await page.getByTestId('new-task-input').press('Enter');
+  await page.getByText('+ Nouveau', { exact: true }).click();
+  await page.getByPlaceholder('Ex : Livraison dépendance équipe A').fill('Suivi à supprimer');
+  await page.getByText('Sauvegarder').click();
   await page.getByTestId('view-all').click();
-  await expect(page.getByText('Créez une section pour ajouter des éléments.')).toBeVisible();
-  await expect(page.getByTestId('new-task-input')).toHaveCount(0);
+  await page.locator('[data-testid^="tracking-"]').filter({ hasText: 'Suivi à supprimer' }).first().getByText('✕').click();
+  await expect(page.getByText('Suivi à supprimer', { exact: true })).toHaveCount(0);
+  await page.getByRole('checkbox', { name: 'Terminer Tâche à terminer' }).click();
+  await expect(page.getByText('Tâche à terminer', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Suivi à supprimer', { exact: true })).toHaveCount(0);
+  await page.getByText('Supprimés', { exact: true }).click();
+  await expect(page.getByText('Tâche à terminer', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByTestId('view-all').click();
+  await expect(page.getByText('Tâche à terminer', { exact: true })).toHaveCount(0);
+  await page.getByText('Supprimés', { exact: true }).click();
+  await expect(page.getByText('Tâche à terminer', { exact: true })).toBeVisible();
 });
+
+for (const viewport of [{ name: 'mobile', width: 375, height: 812 }, { name: 'desktop', width: 1440, height: 900 }]) {
+  test(`Tous reste utilisable sans sections sur ${viewport.name}`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto('/');
+    if (viewport.name === 'mobile') await page.getByTestId('toggle-sidebar').click();
+    await page.getByText('Gérer sections').click();
+    await page.getByTestId('delete-section').first().click();
+    await page.getByTestId('view-all').click();
+    await expect(page.getByText('Créez une section pour ajouter des éléments.').first()).toBeVisible();
+    await expect(page.getByTestId('new-task-input')).toHaveCount(0);
+    await expect(page.getByText('Aucune tâche pour le moment.')).toBeVisible();
+    if (viewport.name === 'mobile') await page.getByText('Points de suivi', { exact: true }).click();
+    await expect(page.getByText('Aucun point de suivi pour le moment.')).toBeVisible();
+    await expect(page.getByText('+ Nouveau', { exact: true })).toHaveCount(0);
+  });
+}
