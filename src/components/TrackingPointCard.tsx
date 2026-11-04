@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import { TrackingPoint } from "../types/trackingPoint";
 import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
@@ -36,6 +37,12 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sec
           <Text style={styles.title}>{point.title}</Text>
           {!!point.dueDate && (
             <View testID="tracking-due-date" style={[styles.badge, isOverdue && styles.overdueBadge]}>
+              {isOverdue && (
+                <Svg width={14} height={14} viewBox="0 0 16 16" fill="none" accessibilityElementsHidden>
+                  <Circle cx={8} cy={8} r={6.5} stroke={colors.danger} strokeWidth={1.5} />
+                  <Path d="M8 4.5V8l2.25 1.5" stroke={colors.danger} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              )}
               <Text style={[styles.badgeText, isOverdue && styles.overdueText]}>{isOverdue ? "Dépassé · " : "📅 "}{point.dueDate}</Text>
             </View>
           )}
@@ -123,7 +130,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  overdueBadge: { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
+  overdueBadge: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, backgroundColor: colors.dangerSoft, borderColor: "transparent" },
   overdueText: { color: colors.danger },
   badgeText: {
     fontSize: 12,
