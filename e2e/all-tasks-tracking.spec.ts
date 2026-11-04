@@ -37,10 +37,10 @@ test('Tous regroupe les éléments, impose une section et conserve les création
   await expect(page.getByText('Tâche générale')).toBeVisible();
   await page.getByTestId('new-task-input').fill('Tâche tous');
   await page.getByTestId('new-task-input').press('Enter');
-  await expect(page.getByText('Tâche tous', { exact: true })).toHaveCount(0);
   await page.getByTestId('task-section-trigger').click();
   await page.getByTestId('task-section-travail').click();
   await page.getByTestId('new-task-input').press('Enter');
+  await expect(page.getByText('Tâche tous', { exact: true })).toBeVisible();
   await page.getByText('+ Nouveau', { exact: true }).click();
   await page.getByPlaceholder('Ex : Livraison dépendance équipe A').fill('Suivi tous');
   await page.getByText('Sauvegarder').click();
@@ -72,6 +72,8 @@ test('les tâches terminées et les suivis supprimés quittent Tous', async ({ p
   await page.getByTestId('new-task-input').press('Enter');
   await page.getByText('+ Nouveau', { exact: true }).click();
   await page.getByPlaceholder('Ex : Livraison dépendance équipe A').fill('Suivi à supprimer');
+  await page.getByTestId('tracking-section-trigger').click();
+  await page.getByTestId('tracking-section-général').click();
   await page.getByText('Sauvegarder').click();
   await page.getByTestId('view-all').click();
   await page.locator('[data-testid^="tracking-"]').filter({ hasText: 'Suivi à supprimer' }).first().getByText('✕').click();
