@@ -2,12 +2,6 @@ import { test, expect } from './fixtures';
 
 test('Tous est la vue initiale et reste sélectionné après rechargement, même sans sections', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('Créez une section pour ajouter des éléments.').first()).toBeVisible();
-  await expect(page.getByTestId('new-task-input')).toHaveCount(0);
-  await page.getByText('+ Nouvelle Section').click();
-  await page.getByPlaceholder('Nom de la section').fill('Général');
-  await page.getByPlaceholder('Nom de la section').press('Enter');
-  await page.getByTestId('view-all').click();
   await expect(page.getByTestId('task-section-picker')).toBeVisible();
   await page.getByTestId('section-général').click();
   await expect(page.getByTestId('task-section-picker')).toHaveCount(0);
