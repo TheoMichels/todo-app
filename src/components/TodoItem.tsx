@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View, Animated, LayoutAnimation, Platform, UIManager } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { Todo } from "../types/todo";
-import { colors, sectionBadgeColor, shadows } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 if (
@@ -18,6 +18,7 @@ type Props = {
   onRemove: (id: string) => void;
   onRestore?: (id: string) => void;
   sectionName?: string;
+  sectionColor?: string;
   drag?: () => void;
   isActive?: boolean;
 };
@@ -29,6 +30,7 @@ export function TodoItem({
   onRemove,
   onRestore,
   sectionName,
+  sectionColor,
   drag,
   isActive,
 }: Props) {
@@ -114,7 +116,7 @@ export function TodoItem({
           {(sectionName || todo.priority === "urgent") && (
             <View style={styles.badgeGroup}>
               {sectionName && (
-                <View testID="section-badge" style={[styles.badge, { backgroundColor: sectionBadgeColor(todo.sectionId) }]}>
+                <View testID="section-badge" style={[styles.badge, { backgroundColor: sectionColor }]}>
                   <Text style={styles.badgeText}>{sectionName}</Text>
                 </View>
               )}

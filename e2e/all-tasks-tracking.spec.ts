@@ -124,3 +124,36 @@ test('création depuis Tous sur mobile', async ({ page }) => {
   await page.getByText('Points de suivi', { exact: true }).click();
   await expect(page.getByText('Suivi mobile', { exact: true })).toBeVisible();
 });
+
+test('les sections distinctes gardent leurs couleurs sur les tâches et les suivis après réordonnancement', async ({ page }) => {
+  const sections = ['a', 'i', 'q'].map((id, index) => ({ id, name: `Section ${index}`, createdAt: index }));
+  await page.addInitScript((data) => {
+    if (localStorage.getItem('@todo_sections_v1')) return;
+    localStorage.setItem('@todo_sections_v1', JSON.stringify(data));
+    localStorage.setItem('@todo_todos_v1', JSON.stringify(data.map((section, index) => ({ id: `todo-${index}`, sectionId: section.id, title: `Tâche couleur ${index}`, done: false, priority: 'standard', order: index, createdAt: index }))));
+    localStorage.setItem('@todo_trackings_v1', JSON.stringify(data.map((section, index) => ({ id: `point-${index}`, sectionId: section.id, title: `Suivi couleur ${index}`, status: '', nextStep: '', order: index, createdAt: index }))));
+  }, sections);
+  await page.goto('/');
+  await page.getByTestId('view-all').click();
+  const badgeColors: string[] = [];
+  for (let index = 0; index < sections.length; index++) {
+    const taskBadge = page.locator('[data-testid^="todo-"]').filter({ hasText: `Tâche couleur ${index}` }).getByTestId('section-badge');
+    const trackingBadge = page.locator('[data-testid^="tracking-"]').filter({ hasText: `Suivi couleur ${index}` }).first().getByTestId('section-badge');
+    await expect(taskBadge).toBeVisible();
+    const color = await taskBadge.evaluate((element) => getComputedStyle(element).backgroundColor);
+    await expect(trackingBadge).toHaveCSS('background-color', color);
+    badgeColors.push(color);
+  }
+  expect(new Set(badgeColors).size).toBe(sections.length);
+  await page.evaluate(() => {
+    const key = '@todo_sections_v1';
+    const stored: unknown[] = JSON.parse(localStorage.getItem(key) ?? '[]');
+    localStorage.setItem(key, JSON.stringify(stored.reverse()));
+  });
+  await page.reload();
+  await page.getByTestId('view-all').click();
+  for (let index = 0; index < sections.length; index++) {
+    await expect(page.locator('[data-testid^="todo-"]').filter({ hasText: `Tâche couleur ${index}` }).getByTestId('section-badge')).toHaveCSS('background-color', badgeColors[index]);
+    await expect(page.locator('[data-testid^="tracking-"]').filter({ hasText: `Suivi couleur ${index}` }).first().getByTestId('section-badge')).toHaveCSS('background-color', badgeColors[index]);
+  }
+});

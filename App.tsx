@@ -39,7 +39,7 @@ import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
 import { SectionPicker } from "./src/components/SectionPicker";
 import { Header } from "./src/components/Header";
-import { colors, gradient, shadows } from "./src/theme/colors";
+import { colors, gradient, sectionBadgeColorsById, shadows } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
 import { ALL_SECTION_ID, NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
 
@@ -238,6 +238,7 @@ function AuthenticatedApp() {
   const sectionNameById = Object.fromEntries(
     sections.map((s) => [s.id, s.name])
   );
+  const sectionColorById = sectionBadgeColorsById(sections.map((section) => section.id));
 
 
   const sidebarElement = (
@@ -408,6 +409,7 @@ function AuthenticatedApp() {
                                             onOpen={setSelectedTodoId}
                                             onRemove={handleRemove}
                                             onRestore={isTrashView ? handleToggle : undefined}
+                                            sectionColor={sectionColorById[item.sectionId]}
                                             sectionName={
                                               isTrashView || isAllView ? sectionNameById[item.sectionId] : undefined
                                             }
@@ -455,6 +457,7 @@ function AuthenticatedApp() {
                                     <ScaleDecorator activeScale={1.01}>
                                       <TrackingPointCard
                                         point={item}
+                                        sectionColor={sectionColorById[item.sectionId]}
                                         sectionName={isAllView ? sectionNameById[item.sectionId] : undefined}
                                         onOpen={setSelectedPointId}
                                         onRemove={handleRemovePoint}

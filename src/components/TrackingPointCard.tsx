@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { TrackingPoint } from "../types/trackingPoint";
-import { colors, sectionBadgeColor, shadows } from "../theme/colors";
+import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -10,9 +10,10 @@ type Props = {
   drag?: () => void;
   isActive?: boolean;
   sectionName?: string;
+  sectionColor?: string;
 };
 
-export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sectionName }: Props) {
+export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sectionName, sectionColor }: Props) {
   return (
     <View testID={`tracking-${point.id}`} style={[styles.card, isActive && styles.cardActive]}>
       {drag && (
@@ -37,7 +38,7 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sec
           )}
         </View>
 
-        {!!sectionName && <View testID="section-badge" style={[styles.sectionBadge, { backgroundColor: sectionBadgeColor(point.sectionId) }]}><Text style={styles.badgeText}>{sectionName}</Text></View>}
+        {!!sectionName && <View testID="section-badge" style={[styles.sectionBadge, { backgroundColor: sectionColor }]}><Text style={styles.badgeText}>{sectionName}</Text></View>}
         {!!point.status && (
           <Text style={styles.line} numberOfLines={2}>
             <Text style={styles.lineLabel}>Statut actuel : </Text>
