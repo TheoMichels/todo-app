@@ -80,15 +80,9 @@ function AuthenticatedApp() {
     updateSection,
     removeSection,
   } = useSections();
-  const [selectedSectionId, setSelectedSectionId] = useState<string>();
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(ALL_SECTION_ID);
   const [taskSectionId, setTaskSectionId] = useState<string>();
   const [trackingSectionId, setTrackingSectionId] = useState<string>();
-
-  useEffect(() => {
-    if (!selectedSectionId && sections.length > 0) {
-      setSelectedSectionId(sections[0].id);
-    }
-  }, [sections, selectedSectionId]);
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -180,7 +174,7 @@ function AuthenticatedApp() {
     runAction(async () => {
       await removeSection(id);
       if (selectedSectionId === id) {
-        setSelectedSectionId(sections.find(s => s.id !== id)?.id);
+        setSelectedSectionId(sections.find(s => s.id !== id)?.id ?? ALL_SECTION_ID);
       }
     });
 
