@@ -17,6 +17,8 @@ test('Tous est la vue initiale et reste sélectionné après rechargement, même
 
 test('Tous regroupe les éléments, impose une section et conserve les créations', async ({ page }) => {
   await page.goto('/');
+  await page.getByTestId('task-section-trigger').click();
+  await page.getByTestId('task-section-général').click();
   await page.getByTestId('new-task-input').fill('Tâche générale');
   await page.getByTestId('new-task-input').press('Enter');
   await page.getByText('+ Nouvelle Section').click();
@@ -64,6 +66,8 @@ test('Tous regroupe les éléments, impose une section et conserve les création
 
 test('les tâches terminées et les suivis supprimés quittent Tous', async ({ page }) => {
   await page.goto('/');
+  await page.getByTestId('task-section-trigger').click();
+  await page.getByTestId('task-section-général').click();
   await page.getByTestId('new-task-input').fill('Tâche à terminer');
   await page.getByTestId('new-task-input').press('Enter');
   await page.getByText('+ Nouveau', { exact: true }).click();
@@ -86,6 +90,8 @@ test('les tâches terminées et les suivis supprimés quittent Tous', async ({ p
 
 test('supprimer une tâche active depuis Tous la retire définitivement', async ({ page }) => {
   await page.goto('/');
+  await page.getByTestId('task-section-trigger').click();
+  await page.getByTestId('task-section-général').click();
   await page.getByTestId('new-task-input').fill('Tâche supprimée');
   await page.getByTestId('new-task-input').press('Enter');
   await page.getByTestId('view-all').click();

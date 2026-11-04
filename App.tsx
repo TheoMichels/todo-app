@@ -182,7 +182,7 @@ function AuthenticatedApp() {
     title: string,
     options: Parameters<typeof addTodo>[1]
   ) => runAction(() => {
-    const target = selectedSectionId === ALL_SECTION_ID ? taskSectionId ?? sections[0]?.id : selectedSectionId;
+    const target = selectedSectionId === ALL_SECTION_ID ? taskSectionId : selectedSectionId;
     if (!sections.some((section) => section.id === target)) throw new Error("Choisissez une section.");
     return addTodo(title, { ...options, sectionId: target });
   }, { rethrow: true });
@@ -200,7 +200,7 @@ function AuthenticatedApp() {
 
   const handleAddPoint = (data: Parameters<typeof addPoint>[0]) =>
     runAction(() => {
-      const target = selectedSectionId === ALL_SECTION_ID ? trackingSectionId ?? sections[0]?.id : selectedSectionId;
+      const target = selectedSectionId === ALL_SECTION_ID ? trackingSectionId : selectedSectionId;
       if (!sections.some((section) => section.id === target)) throw new Error("Choisissez une section.");
       return addPoint(data, target);
     }, { rethrow: true });
@@ -375,7 +375,7 @@ function AuthenticatedApp() {
                               />
                             ) : (
                               <>
-                                {!isTrashView && (sections.length === 0 ? <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text> : <NewTaskForm onAdd={handleAddTodo} sectionPicker={isAllView ? <SectionPicker kind="task" sections={sections} value={taskSectionId ?? sections[0]?.id} onChange={setTaskSectionId} /> : undefined} />)}
+                                {!isTrashView && (sections.length === 0 ? <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text> : <NewTaskForm onAdd={handleAddTodo} sectionPicker={isAllView ? <SectionPicker kind="task" sections={sections} value={taskSectionId} onChange={setTaskSectionId} /> : undefined} />)}
 
                                 {tasksLoading ? (
                                   <Text style={styles.empty}>Chargement...</Text>
@@ -461,7 +461,7 @@ function AuthenticatedApp() {
                                     </ScaleDecorator>
                                   )}
                                   ListFooterComponent={
-                                    sections.length > 0 ? <NewTrackingPointForm onSave={handleAddPoint} sectionPicker={isAllView ? <SectionPicker kind="tracking" sections={sections} value={trackingSectionId ?? sections[0]?.id} onChange={setTrackingSectionId} /> : undefined} /> : <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text>
+                                    sections.length > 0 ? <NewTrackingPointForm onSave={handleAddPoint} sectionPicker={isAllView ? <SectionPicker kind="tracking" sections={sections} value={trackingSectionId} onChange={setTrackingSectionId} /> : undefined} /> : <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text>
                                   }
                                 />
                               </View>
