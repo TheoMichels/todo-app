@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { TrackingPoint } from "../types/trackingPoint";
-import { colors, shadows } from "../theme/colors";
+import { colors, sectionBadgeColor, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
@@ -37,7 +37,7 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sec
           )}
         </View>
 
-        {!!sectionName && <Text style={styles.badgeText}>{sectionName}</Text>}
+        {!!sectionName && <View testID="section-badge" style={[styles.sectionBadge, { backgroundColor: sectionBadgeColor(point.sectionId) }]}><Text style={styles.badgeText}>{sectionName}</Text></View>}
         {!!point.status && (
           <Text style={styles.line} numberOfLines={2}>
             <Text style={styles.lineLabel}>Statut actuel : </Text>
@@ -65,6 +65,7 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sec
 }
 
 const styles = StyleSheet.create({
+  sectionBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginTop: 4 },
   card: {
     flexDirection: "row",
     justifyContent: "space-between",

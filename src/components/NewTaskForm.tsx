@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -12,13 +12,14 @@ import { colors, spacing } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 type Props = {
+  sectionPicker?: ReactNode;
   onAdd: (
     title: string,
     options: { priority: Priority }
   ) => Promise<void>;
 };
 
-export function NewTaskForm({ onAdd }: Props) {
+export function NewTaskForm({ onAdd, sectionPicker }: Props) {
   const [title, setTitle] = useState("");
   const [urgent, setUrgent] = useState(false);
 
@@ -74,6 +75,7 @@ export function NewTaskForm({ onAdd }: Props) {
       />
 
       <View style={styles.controlsRow}>
+        {sectionPicker}
         <Pressable
           style={[styles.urgentToggle, urgent && styles.urgentToggleActive, cursorPointer]}
           onPress={() => setUrgent((v) => !v)}
@@ -118,11 +120,12 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "column",
     marginBottom: 24,
+    zIndex: 5,
   },
   controlsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
     marginTop: spacing.md,
   },
   input: {
@@ -138,6 +141,7 @@ const styles = StyleSheet.create({
   },
   urgentToggle: {
     flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",

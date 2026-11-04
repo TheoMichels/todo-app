@@ -1,0 +1,13 @@
+# Build Report — all-sections-controls
+- Statut : READY_FOR_QA ; cycle 1 ; branche `feature/all-tasks-tracking`.
+- Interface : sélecteur commun à liste dépliable, sur la ligne des actions de tâche et sous l’échéance du suivi ; testID stables. Absence de sections et erreurs restent traitées par les vues existantes.
+- Palette opaque calculée depuis l’identifiant de section, identique sur tâches et suivis ; texte foncé, conservation après rechargement. Une palette finie peut attribuer la même teinte à deux sections.
+- Données : aucun changement de schéma, aucune commande sur une base distante.
+- Fichiers : App.tsx, composants de formulaire et cartes, SectionPicker, tokens, spec Playwright, fiche projet et rapport ; tous dans le périmètre.
+- AC-01 : formulaire tâche et SectionPicker ; sélection requise testée par Playwright.
+- AC-02 : formulaire suivi et SectionPicker ; sélection requise et association automatique testées par Playwright.
+- AC-03 : tokens et cartes ; couleur commune et stable testée après rechargement.
+- AC-04 : Playwright desktop/mobile, persistance et absence de sections.
+- Tests : `npm run typecheck` PASS ; Playwright ciblé 6/6 PASS ; harness strict front à exécuter sur le commit.
+- Preuve rouge : menu masqué par la liste desktop ; correction de superposition, puis 6/6 PASS.
+- Aucun changement d’AC ; aucune migration ni variable d’environnement.

@@ -1,10 +1,11 @@
-import { createElement, useState } from "react";
+import { createElement, ReactNode, useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { colors } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 import { CalendarPicker } from "./CalendarPicker";
 
 type Props = {
+  sectionPicker?: ReactNode;
   onSave: (data: {
     title: string;
     status: string;
@@ -13,7 +14,7 @@ type Props = {
   }) => Promise<void>;
 };
 
-export function NewTrackingPointForm({ onSave }: Props) {
+export function NewTrackingPointForm({ onSave, sectionPicker }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("");
@@ -103,6 +104,8 @@ export function NewTrackingPointForm({ onSave }: Props) {
           }} 
         />
       )}
+
+      {sectionPicker}
 
       <View style={styles.actions}>
         <Pressable style={cursorPointer} onPress={reset}>

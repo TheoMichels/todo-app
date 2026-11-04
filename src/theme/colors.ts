@@ -76,3 +76,12 @@ export const shadows = {
 
 export const radius = { sm: 12, md: 16, lg: 20, xl: 24 };
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
+
+// Fonds opaques pour conserver le contraste des noms de section.
+export const sectionBadgeColors = ["#DCEBFA", "#E8DDF8", "#D7F1E5", "#FCE4CF", "#F9DEE8", "#E8EBCB", "#D7EFF1", "#F2E3D5"];
+
+export function sectionBadgeColor(id: string): string {
+  let hash = 0;
+  for (const character of id) hash = (Math.imul(hash, 31) + character.charCodeAt(0)) >>> 0;
+  return sectionBadgeColors[hash % sectionBadgeColors.length];
+}

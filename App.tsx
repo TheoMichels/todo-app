@@ -37,6 +37,7 @@ import { NoteCard } from "./src/components/NoteCard";
 import { NewNoteForm } from "./src/components/NewNoteForm";
 import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
+import { SectionPicker } from "./src/components/SectionPicker";
 import { Header } from "./src/components/Header";
 import { colors, gradient, shadows } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
@@ -238,18 +239,6 @@ function AuthenticatedApp() {
     sections.map((s) => [s.id, s.name])
   );
 
-  const sectionPicker = (kind: "task" | "tracking") => (
-    <View testID={`${kind}-section-picker`} style={{ marginBottom: 12 }}>
-      <Text style={styles.empty}>Choisissez une section</Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {sections.map((section) => (
-          <Pressable key={section.id} testID={`${kind}-section-${section.name.toLowerCase()}`} accessibilityRole="button" accessibilityState={{ selected: (kind === "task" ? taskSectionId : trackingSectionId) === section.id }} onPress={() => kind === "task" ? setTaskSectionId(section.id) : setTrackingSectionId(section.id)} style={{ padding: 10, borderRadius: 10, backgroundColor: (kind === "task" ? taskSectionId : trackingSectionId) === section.id ? colors.accent : colors.surface }}>
-            <Text style={{ color: (kind === "task" ? taskSectionId : trackingSectionId) === section.id ? colors.textOnBrand : colors.textPrimary }}>{section.name}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
 
   const sidebarElement = (
     <Sidebar
@@ -391,7 +380,7 @@ function AuthenticatedApp() {
                               />
                             ) : (
                               <>
-                                {!isTrashView && (sections.length === 0 ? <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text> : <>{isAllView && sectionPicker("task")}<NewTaskForm onAdd={handleAddTodo} /></>)}
+                                {!isTrashView && (sections.length === 0 ? <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text> : <NewTaskForm onAdd={handleAddTodo} sectionPicker={isAllView ? <SectionPicker kind="task" sections={sections} value={taskSectionId} onChange={setTaskSectionId} /> : undefined} />)}
 
                                 {tasksLoading ? (
                                   <Text style={styles.empty}>Chargement...</Text>
@@ -475,7 +464,7 @@ function AuthenticatedApp() {
                                     </ScaleDecorator>
                                   )}
                                   ListFooterComponent={
-                                    sections.length > 0 ? <>{isAllView && sectionPicker("tracking")}<NewTrackingPointForm onSave={handleAddPoint} /></> : <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text>
+                                    sections.length > 0 ? <NewTrackingPointForm onSave={handleAddPoint} sectionPicker={isAllView ? <SectionPicker kind="tracking" sections={sections} value={trackingSectionId} onChange={setTrackingSectionId} /> : undefined} /> : <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text>
                                   }
                                 />
                               </View>

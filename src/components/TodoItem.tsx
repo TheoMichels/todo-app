@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View, Animated, LayoutAnimation, Platform, UIManager } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { Todo } from "../types/todo";
-import { colors, shadows } from "../theme/colors";
+import { colors, sectionBadgeColor, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
 if (
@@ -114,7 +114,7 @@ export function TodoItem({
           {(sectionName || todo.priority === "urgent") && (
             <View style={styles.badgeGroup}>
               {sectionName && (
-                <View style={styles.badge}>
+                <View testID="section-badge" style={[styles.badge, { backgroundColor: sectionBadgeColor(todo.sectionId) }]}>
                   <Text style={styles.badgeText}>{sectionName}</Text>
                 </View>
               )}

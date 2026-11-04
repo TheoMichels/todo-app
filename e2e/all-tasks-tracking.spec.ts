@@ -21,17 +21,25 @@ test('Tous regroupe les éléments, impose une section et conserve les création
   await page.getByTestId('new-task-input').fill('Tâche tous');
   await page.getByTestId('new-task-input').press('Enter');
   await expect(page.getByText('Tâche tous', { exact: true })).toHaveCount(0);
+  await page.getByTestId('task-section-trigger').click();
   await page.getByTestId('task-section-travail').click();
   await page.getByTestId('new-task-input').press('Enter');
   await page.getByText('+ Nouveau', { exact: true }).click();
   await page.getByPlaceholder('Ex : Livraison dépendance équipe A').fill('Suivi tous');
   await page.getByText('Sauvegarder').click();
   await expect(page.getByText('Suivi tous', { exact: true })).toHaveCount(0);
+  await page.getByTestId('tracking-section-trigger').click();
   await page.getByTestId('tracking-section-travail').click();
   await page.getByText('Sauvegarder').click();
   await expect(page.getByText('Suivi tous', { exact: true })).toBeVisible();
+  const taskBadge = page.locator('[data-testid^="todo-"]').filter({ hasText: 'Tâche tous' }).getByTestId('section-badge');
+  const trackingBadge = page.locator('[data-testid^="tracking-"]').filter({ hasText: 'Suivi tous' }).first().getByTestId('section-badge');
+  const badgeColor = await taskBadge.evaluate((el) => getComputedStyle(el).backgroundColor);
+  await expect(trackingBadge).toHaveCSS('background-color', badgeColor);
   await page.reload();
   await page.getByTestId('view-all').click();
+  await expect(taskBadge).toHaveCSS('background-color', badgeColor);
+  await expect(trackingBadge).toHaveCSS('background-color', badgeColor);
   await expect(page.getByText('Tâche tous', { exact: true })).toBeVisible();
   await expect(page.getByText('Suivi tous', { exact: true })).toBeVisible();
   await page.getByTestId('section-travail').click();
@@ -91,3 +99,28 @@ for (const viewport of [{ name: 'mobile', width: 375, height: 812 }, { name: 'de
     await expect(page.getByText('+ Nouveau', { exact: true })).toHaveCount(0);
   });
 }
+
+test('création depuis Tous sur mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+  await page.getByTestId('toggle-sidebar').click();
+  await page.getByTestId('view-all').click();
+  await page.getByTestId('new-task-input').fill('Tâche mobile');
+  await page.getByTestId('task-section-trigger').click();
+  await page.getByTestId('task-section-général').click();
+  await page.getByTestId('new-task-input').press('Enter');
+  await expect(page.getByText('Tâche mobile', { exact: true })).toBeVisible();
+  await page.getByText('Points de suivi', { exact: true }).click();
+  await page.getByText('+ Nouveau', { exact: true }).click();
+  await page.getByPlaceholder('Ex : Livraison dépendance équipe A').fill('Suivi mobile');
+  await page.getByTestId('tracking-section-trigger').click();
+  await page.getByTestId('tracking-section-général').click();
+  await page.getByText('Sauvegarder').click();
+  await expect(page.getByText('Suivi mobile', { exact: true })).toBeVisible();
+  await page.reload();
+  await page.getByTestId('toggle-sidebar').click();
+  await page.getByTestId('view-all').click();
+  await expect(page.getByText('Tâche mobile', { exact: true })).toBeVisible();
+  await page.getByText('Points de suivi', { exact: true }).click();
+  await expect(page.getByText('Suivi mobile', { exact: true })).toBeVisible();
+});
