@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  overdueBadge: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, backgroundColor: colors.dangerSoft, borderColor: "transparent" },
+  overdueBadge: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, backgroundColor: "transparent", borderColor: colors.danger },
   overdueText: { color: colors.danger },
   badgeText: {
     fontSize: 12,
