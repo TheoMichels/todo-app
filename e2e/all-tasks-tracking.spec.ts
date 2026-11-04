@@ -178,7 +178,7 @@ test('les sections distinctes gardent leurs couleurs sur les tâches et les suiv
   }
 });
 
-test('les échéances passées sont marquées Dépassé, celles du jour et futures ne le sont pas', async ({ page }) => {
+test('les échéances passées gardent leur format et deviennent rouges, celles du jour et futures restent normales', async ({ page }) => {
   const dates = await page.evaluate(() => {
     const date = (offset: number) => {
       const value = new Date();
@@ -194,7 +194,19 @@ test('les échéances passées sont marquées Dépassé, celles du jour et futur
   await page.goto('/');
   await page.getByTestId('view-all').click();
   await page.getByText('Points de suivi', { exact: true }).click();
-  await expect(page.getByTestId('tracking-due-date').filter({ hasText: 'Dépassé' })).toHaveCount(1);
-  await expect(page.getByTestId('tracking-due-date').filter({ hasText: dates[1] })).not.toContainText('Dépassé');
-  await expect(page.getByTestId('tracking-due-date').filter({ hasText: dates[2] })).not.toContainText('Dépassé');
+  const badges = page.getByTestId('tracking-due-date');
+  const overdue = badges.nth(0);
+  const today = badges.nth(1);
+  const future = badges.nth(2);
+  const overdueText = overdue.getByText(`📅 ${dates[0]}`);
+  const todayText = today.getByText(`📅 ${dates[1]}`);
+  const futureText = future.getByText(`📅 ${dates[2]}`);
+  await expect(overdue).toHaveText(`📅 ${dates[0]}`);
+  await expect(overdueText).toHaveCSS('color', 'rgb(192, 57, 43)');
+  await expect(overdue).toHaveCSS('border-top-color', 'rgb(192, 57, 43)');
+  await expect(today).toHaveText(`📅 ${dates[1]}`);
+  await expect(future).toHaveText(`📅 ${dates[2]}`);
+  await expect(todayText).not.toHaveCSS('color', 'rgb(192, 57, 43)');
+  await expect(futureText).not.toHaveCSS('color', 'rgb(192, 57, 43)');
+  expect(await overdue.evaluate((element) => element.getBoundingClientRect().width)).toBeCloseTo(await today.evaluate((element) => element.getBoundingClientRect().width), 0);
 });
