@@ -198,12 +198,15 @@ test('les échéances passées gardent leur format et deviennent rouges, celles 
   const overdue = badges.nth(0);
   const today = badges.nth(1);
   const future = badges.nth(2);
+  const overdueText = overdue.getByText(`📅 ${dates[0]}`);
+  const todayText = today.getByText(`📅 ${dates[1]}`);
+  const futureText = future.getByText(`📅 ${dates[2]}`);
   await expect(overdue).toHaveText(`📅 ${dates[0]}`);
-  await expect(overdue).toHaveCSS('color', 'rgb(192, 57, 43)');
+  await expect(overdueText).toHaveCSS('color', 'rgb(192, 57, 43)');
   await expect(overdue).toHaveCSS('border-top-color', 'rgb(192, 57, 43)');
   await expect(today).toHaveText(`📅 ${dates[1]}`);
   await expect(future).toHaveText(`📅 ${dates[2]}`);
-  await expect(today).not.toHaveCSS('color', 'rgb(192, 57, 43)');
-  await expect(future).not.toHaveCSS('color', 'rgb(192, 57, 43)');
+  await expect(todayText).not.toHaveCSS('color', 'rgb(192, 57, 43)');
+  await expect(futureText).not.toHaveCSS('color', 'rgb(192, 57, 43)');
   expect(await overdue.evaluate((element) => element.getBoundingClientRect().width)).toBe(await today.evaluate((element) => element.getBoundingClientRect().width));
 });
