@@ -61,6 +61,20 @@ test('les tâches terminées et les suivis supprimés quittent Tous', async ({ p
   await expect(page.getByText('Tâche à terminer', { exact: true })).toBeVisible();
 });
 
+test('supprimer une tâche active depuis Tous la retire définitivement', async ({ page }) => {
+  await page.goto('/');
+  await page.getByTestId('new-task-input').fill('Tâche supprimée');
+  await page.getByTestId('new-task-input').press('Enter');
+  await page.getByTestId('view-all').click();
+  await page.locator('[data-testid^="todo-"]').filter({ hasText: 'Tâche supprimée' }).getByText('✕').click();
+  await expect(page.getByText('Tâche supprimée', { exact: true })).toHaveCount(0);
+  await page.getByText('Supprimés', { exact: true }).click();
+  await expect(page.getByText('Tâche supprimée', { exact: true })).toHaveCount(0);
+  await page.reload();
+  await page.getByTestId('view-all').click();
+  await expect(page.getByText('Tâche supprimée', { exact: true })).toHaveCount(0);
+});
+
 for (const viewport of [{ name: 'mobile', width: 375, height: 812 }, { name: 'desktop', width: 1440, height: 900 }]) {
   test(`Tous reste utilisable sans sections sur ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
