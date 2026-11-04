@@ -9,11 +9,12 @@ type Props = {
   onRemove: (id: string) => void;
   drag?: () => void;
   isActive?: boolean;
+  sectionName?: string;
 };
 
-export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive }: Props) {
+export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sectionName }: Props) {
   return (
-    <View style={[styles.card, isActive && styles.cardActive]}>
+    <View testID={`tracking-${point.id}`} style={[styles.card, isActive && styles.cardActive]}>
       {drag && (
         <Pressable
           style={[styles.dragHandle, cursorPointer]}
@@ -36,6 +37,7 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive }: P
           )}
         </View>
 
+        {!!sectionName && <Text style={styles.badgeText}>{sectionName}</Text>}
         {!!point.status && (
           <Text style={styles.line} numberOfLines={2}>
             <Text style={styles.lineLabel}>Statut actuel : </Text>

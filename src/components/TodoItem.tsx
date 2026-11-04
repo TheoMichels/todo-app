@@ -76,7 +76,7 @@ export function TodoItem({
 
   return (
     <Animated.View style={{ opacity: opacityAnim, transform: [{ scale: scaleAnim }, { scale: isActive ? 1.01 : 1 }] }}>
-      <View style={[styles.row, isActive && styles.rowActive]}>
+      <View testID={`todo-${todo.id}`} style={[styles.row, isActive && styles.rowActive]}>
         <View style={styles.topLine}>
           {drag && (
             <Pressable

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LayoutAnimation } from "react-native";
 import { Priority, Todo } from "../types/todo";
-import { TRASH_SECTION_ID } from "../types/section";
+import { ALL_SECTION_ID, TRASH_SECTION_ID } from "../types/section";
 import { todoRepository } from "../storage";
 import { sortTodos } from "../utils/todoSort";
 
@@ -33,16 +33,17 @@ export function useTodos(sectionId: string | undefined) {
   const addTodo = useCallback(
     async (
       title: string,
-      options?: { priority?: Priority }
+      options?: { priority?: Priority; sectionId?: string }
     ) => {
+      const targetSectionId = options?.sectionId ?? sectionId;
       const trimmed = title.trim();
-      if (!trimmed || !sectionId || sectionId === TRASH_SECTION_ID) return;
+      if (!trimmed || !targetSectionId || targetSectionId === TRASH_SECTION_ID || targetSectionId === ALL_SECTION_ID) return;
 
       const newId = Math.random().toString(36).substring(2, 9);
       const currentTodos = todosRef.current;
       const priority = options?.priority ?? "standard";
       const groupTodos = currentTodos.filter(
-        (todo) => todo.sectionId === sectionId && todo.priority === priority
+        (todo) => todo.sectionId === targetSectionId && todo.priority === priority
       );
       const minOrder = groupTodos.reduce(
         (min, todo) => Math.min(min, todo.order ?? 0),
@@ -50,7 +51,7 @@ export function useTodos(sectionId: string | undefined) {
       );
       const optimisticTodo: Todo = {
         id: newId,
-        sectionId,
+        sectionId: targetSectionId,
         title: trimmed,
         done: false,
         priority,
@@ -144,7 +145,7 @@ export function useTodos(sectionId: string | undefined) {
     const filtered =
       sectionId === TRASH_SECTION_ID
         ? todos.filter((t) => t.done)
-        : todos.filter((t) => t.sectionId === sectionId && !t.done);
+        : todos.filter((t) => (sectionId === ALL_SECTION_ID || t.sectionId === sectionId) && !t.done);
     return sortTodos(filtered);
   }, [todos, sectionId]);
 

@@ -7,7 +7,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { NOTES_SECTION_ID, Section, TRASH_SECTION_ID } from "../types/section";
+import { ALL_SECTION_ID, NOTES_SECTION_ID, Section, TRASH_SECTION_ID } from "../types/section";
 import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
 
@@ -64,6 +64,7 @@ export function Sidebar({ sections, todoCounts = {}, selectedId, onSelect, onAdd
         contentContainerStyle={[styles.listContent, editingId && styles.listContentEditing]}
         showsVerticalScrollIndicator={false}
       >
+        <Pressable testID="view-all" style={[styles.item, selectedId === ALL_SECTION_ID && styles.itemSelected, cursorPointer]} onPress={() => onSelect(ALL_SECTION_ID)}><Text style={[styles.itemText, selectedId === ALL_SECTION_ID && styles.itemTextSelected]}>Tous</Text></Pressable>
         {sections.map((section) => {
           const selected = section.id === selectedId;
 
@@ -87,6 +88,7 @@ export function Sidebar({ sections, todoCounts = {}, selectedId, onSelect, onAdd
               style={[styles.item, selected && styles.itemSelected]}
             >
               <Pressable
+                testID={`section-${section.name.toLowerCase()}`}
                 style={[styles.itemPressable, cursorPointer]}
                 onPress={() => onSelect(section.id)}
               >
@@ -125,6 +127,7 @@ export function Sidebar({ sections, todoCounts = {}, selectedId, onSelect, onAdd
                   </Pressable>
                   <Pressable
                     style={cursorPointer}
+                    testID="delete-section"
                     onPress={(e) => {
                       e.stopPropagation();
                       onRemove(section.id);
