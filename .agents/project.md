@@ -29,7 +29,7 @@
 - Stockage & Auth : `src/config/storageMode.ts`, `src/services/supabaseClient.ts`, `src/services/authService.ts`, `src/storage/validatedStorage.ts`.
 
 ## Design
-- Tokens `src/theme/colors.ts` (canon stack-target §2) · dégradé 4 teintes · brand `#072939`, primary `#5E5CE6` · shadows/radius/spacing.
+- Tokens `src/theme/colors.ts` (canon stack-target §2) · dégradé 4 teintes · brand `#072939`, primary `#5E5CE6` · palette de 16 couleurs des sections déterministe par identifiants · shadows/radius/spacing.
 
 ## Zones sensibles et déploiement
 - Vercel (`vercel.json`) + Supabase partagé (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`). `DIRECT_URL`/`DATABASE_URL` pour migrations.

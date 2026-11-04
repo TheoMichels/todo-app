@@ -37,10 +37,11 @@ import { NoteCard } from "./src/components/NoteCard";
 import { NewNoteForm } from "./src/components/NewNoteForm";
 import { ErrorState } from "./src/components/ErrorState";
 import { ErrorBanner } from "./src/components/ErrorBanner";
+import { SectionPicker } from "./src/components/SectionPicker";
 import { Header } from "./src/components/Header";
-import { colors, gradient, shadows } from "./src/theme/colors";
+import { colors, gradient, sectionBadgeColorsById, shadows } from "./src/theme/colors";
 import { cursorPointer } from "./src/theme/webCursor";
-import { NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
+import { ALL_SECTION_ID, NOTES_SECTION_ID, TRASH_SECTION_ID } from "./src/types/section";
 
 // Matches Sidebar's own width (200) + marginRight (12).
 const SIDEBAR_TOTAL_WIDTH = 212;
@@ -79,13 +80,9 @@ function AuthenticatedApp() {
     updateSection,
     removeSection,
   } = useSections();
-  const [selectedSectionId, setSelectedSectionId] = useState<string>();
-
-  useEffect(() => {
-    if (!selectedSectionId && sections.length > 0) {
-      setSelectedSectionId(sections[0].id);
-    }
-  }, [sections, selectedSectionId]);
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(ALL_SECTION_ID);
+  const [taskSectionId, setTaskSectionId] = useState<string>();
+  const [trackingSectionId, setTrackingSectionId] = useState<string>();
 
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
@@ -177,14 +174,18 @@ function AuthenticatedApp() {
     runAction(async () => {
       await removeSection(id);
       if (selectedSectionId === id) {
-        setSelectedSectionId(sections.find(s => s.id !== id)?.id);
+        setSelectedSectionId(sections.find(s => s.id !== id)?.id ?? ALL_SECTION_ID);
       }
     });
 
   const handleAddTodo = (
     title: string,
     options: Parameters<typeof addTodo>[1]
-  ) => runAction(() => addTodo(title, options), { rethrow: true });
+  ) => runAction(() => {
+    const target = selectedSectionId === ALL_SECTION_ID ? taskSectionId : selectedSectionId;
+    if (!sections.some((section) => section.id === target)) throw new Error("Choisissez une section.");
+    return addTodo(title, { ...options, sectionId: target });
+  }, { rethrow: true });
 
   const handleToggle = (id: string) => runAction(() => toggleTodo(id));
 
@@ -198,7 +199,11 @@ function AuthenticatedApp() {
     });
 
   const handleAddPoint = (data: Parameters<typeof addPoint>[0]) =>
-    runAction(() => addPoint(data), { rethrow: true });
+    runAction(() => {
+      const target = selectedSectionId === ALL_SECTION_ID ? trackingSectionId : selectedSectionId;
+      if (!sections.some((section) => section.id === target)) throw new Error("Choisissez une section.");
+      return addPoint(data, target);
+    }, { rethrow: true });
 
   const handleUpdatePoint = (id: string, patch: Parameters<typeof updatePoint>[1]) =>
     runAction(() => updatePoint(id, patch));
@@ -218,6 +223,7 @@ function AuthenticatedApp() {
   const handleRemoveNote = (id: string) => runAction(() => removeNote(id));
 
   const tasksLoading = sectionsLoading || todosLoading;
+  const isAllView = selectedSectionId === ALL_SECTION_ID;
   const isTrashView = selectedSectionId === TRASH_SECTION_ID;
   const isNotesView = selectedSectionId === NOTES_SECTION_ID;
   const selectedSection = sections.find((s) => s.id === selectedSectionId);
@@ -226,6 +232,8 @@ function AuthenticatedApp() {
   const sectionNameById = Object.fromEntries(
     sections.map((s) => [s.id, s.name])
   );
+  const sectionColorById = sectionBadgeColorsById(sections.map((section) => section.id));
+
 
   const sidebarElement = (
     <Sidebar
@@ -354,7 +362,7 @@ function AuthenticatedApp() {
                         {(!isMobile || mobileActiveTab === "tasks") && (
                           <View style={[styles.content, !isMobile && { flex: 70 }]}>
                             <Text style={styles.header}>
-                              {isTrashView ? "Supprimés" : selectedSection?.name ?? "Mes tâches"}
+                              {isTrashView ? "Supprimés" : isAllView ? "Tous" : selectedSection?.name ?? "Mes tâches"}
                             </Text>
 
                             {sectionsError || todosError ? (
@@ -367,7 +375,7 @@ function AuthenticatedApp() {
                               />
                             ) : (
                               <>
-                                {!isTrashView && <NewTaskForm onAdd={handleAddTodo} />}
+                                {!isTrashView && (sections.length === 0 ? <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text> : <NewTaskForm onAdd={handleAddTodo} sectionPicker={isAllView ? <SectionPicker kind="task" sections={sections} value={taskSectionId} onChange={setTaskSectionId} /> : undefined} />)}
 
                                 {tasksLoading ? (
                                   <Text style={styles.empty}>Chargement...</Text>
@@ -395,10 +403,11 @@ function AuthenticatedApp() {
                                             onOpen={setSelectedTodoId}
                                             onRemove={handleRemove}
                                             onRestore={isTrashView ? handleToggle : undefined}
+                                            sectionColor={sectionColorById[item.sectionId]}
                                             sectionName={
-                                              isTrashView ? sectionNameById[item.sectionId] : undefined
+                                              isTrashView || isAllView ? sectionNameById[item.sectionId] : undefined
                                             }
-                                            drag={drag}
+                                            drag={isAllView ? undefined : drag}
                                             isActive={isActive}
                                           />
                                         </ScaleDecorator>
@@ -442,15 +451,17 @@ function AuthenticatedApp() {
                                     <ScaleDecorator activeScale={1.01}>
                                       <TrackingPointCard
                                         point={item}
+                                        sectionColor={sectionColorById[item.sectionId]}
+                                        sectionName={isAllView ? sectionNameById[item.sectionId] : undefined}
                                         onOpen={setSelectedPointId}
                                         onRemove={handleRemovePoint}
-                                        drag={drag}
+                                        drag={isAllView ? undefined : drag}
                                         isActive={isActive}
                                       />
                                     </ScaleDecorator>
                                   )}
                                   ListFooterComponent={
-                                    <NewTrackingPointForm onSave={handleAddPoint} />
+                                    sections.length > 0 ? <NewTrackingPointForm onSave={handleAddPoint} sectionPicker={isAllView ? <SectionPicker kind="tracking" sections={sections} value={trackingSectionId} onChange={setTrackingSectionId} /> : undefined} /> : <Text style={styles.empty}>Créez une section pour ajouter des éléments.</Text>
                                   }
                                 />
                               </View>

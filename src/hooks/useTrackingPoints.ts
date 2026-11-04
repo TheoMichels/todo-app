@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutAnimation } from "react-native";
 import { TrackingPoint } from "../types/trackingPoint";
-import { TRASH_SECTION_ID } from "../types/section";
+import { ALL_SECTION_ID, TRASH_SECTION_ID } from "../types/section";
 import { trackingRepository } from "../storage";
 
 type NewTrackingPointData = {
@@ -34,9 +34,9 @@ export function useTrackingPoints(sectionId: string | undefined) {
   }, [load]);
 
   const addPoint = useCallback(
-    async (data: NewTrackingPointData) => {
-      if (!sectionId || sectionId === TRASH_SECTION_ID) return;
-      const created = await trackingRepository.create({ ...data, sectionId });
+    async (data: NewTrackingPointData, targetSectionId = sectionId) => {
+      if (!targetSectionId || targetSectionId === TRASH_SECTION_ID || targetSectionId === ALL_SECTION_ID) throw new Error("Choisissez une section.");
+      const created = await trackingRepository.create({ ...data, sectionId: targetSectionId });
       setPoints((prev) => [...prev, created]);
     },
     [sectionId]
@@ -76,7 +76,7 @@ export function useTrackingPoints(sectionId: string | undefined) {
   }, [load]);
 
   const sectionPoints = useMemo(
-    () => [...points.filter((p) => p.sectionId === sectionId)].sort((a, b) => {
+    () => [...points.filter((p) => sectionId === ALL_SECTION_ID || p.sectionId === sectionId)].sort((a, b) => {
       if (a.order !== b.order) return (a.order ?? 0) - (b.order ?? 0);
       return a.createdAt - b.createdAt;
     }),

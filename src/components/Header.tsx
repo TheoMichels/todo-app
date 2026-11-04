@@ -38,6 +38,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       <View style={styles.topBar}>
         {onToggleSidebar && (
           <Pressable
+            testID="toggle-sidebar"
             style={[styles.sidebarToggle, cursorPointer]}
             onPress={onToggleSidebar}
             hitSlop={8}

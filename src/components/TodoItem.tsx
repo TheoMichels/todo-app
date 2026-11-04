@@ -18,6 +18,7 @@ type Props = {
   onRemove: (id: string) => void;
   onRestore?: (id: string) => void;
   sectionName?: string;
+  sectionColor?: string;
   drag?: () => void;
   isActive?: boolean;
 };
@@ -29,6 +30,7 @@ export function TodoItem({
   onRemove,
   onRestore,
   sectionName,
+  sectionColor,
   drag,
   isActive,
 }: Props) {
@@ -76,7 +78,7 @@ export function TodoItem({
 
   return (
     <Animated.View style={{ opacity: opacityAnim, transform: [{ scale: scaleAnim }, { scale: isActive ? 1.01 : 1 }] }}>
-      <View style={[styles.row, isActive && styles.rowActive]}>
+      <View testID={`todo-${todo.id}`} style={[styles.row, isActive && styles.rowActive]}>
         <View style={styles.topLine}>
           {drag && (
             <Pressable
@@ -89,6 +91,10 @@ export function TodoItem({
           )}
 
           <Pressable
+            testID="todo-toggle"
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isChecked }}
+            accessibilityLabel={`Terminer ${todo.title}`}
             style={[styles.checkbox, cursorPointer]}
             onPress={handleToggle}
             hitSlop={8}
@@ -110,7 +116,7 @@ export function TodoItem({
           {(sectionName || todo.priority === "urgent") && (
             <View style={styles.badgeGroup}>
               {sectionName && (
-                <View style={styles.badge}>
+                <View testID="section-badge" style={[styles.badge, { backgroundColor: sectionColor }]}>
                   <Text style={styles.badgeText}>{sectionName}</Text>
                 </View>
               )}
