@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import { TrackingPoint } from "../types/trackingPoint";
 import { colors, shadows } from "../theme/colors";
 import { cursorPointer } from "../theme/webCursor";
@@ -14,6 +15,9 @@ type Props = {
 };
 
 export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sectionName, sectionColor }: Props) {
+  const today = new Date();
+  const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const isOverdue = !!point.dueDate && point.dueDate < localToday;
   return (
     <View testID={`tracking-${point.id}`} style={[styles.card, isActive && styles.cardActive]}>
       {drag && (
@@ -32,8 +36,14 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sec
         <View style={styles.titleRow}>
           <Text style={styles.title}>{point.title}</Text>
           {!!point.dueDate && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>📅 {point.dueDate}</Text>
+            <View testID="tracking-due-date" style={[styles.badge, isOverdue && styles.overdueBadge]}>
+              {isOverdue && (
+                <Svg width={14} height={14} viewBox="0 0 16 16" fill="none" accessibilityElementsHidden>
+                  <Circle cx={8} cy={8} r={6.5} stroke={colors.danger} strokeWidth={1.5} />
+                  <Path d="M8 4.5V8l2.25 1.5" stroke={colors.danger} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              )}
+              <Text style={[styles.badgeText, isOverdue && styles.overdueText]}>{isOverdue ? "Dépassé · " : "📅 "}{point.dueDate}</Text>
             </View>
           )}
         </View>
@@ -120,6 +130,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  overdueBadge: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 20, backgroundColor: "transparent", borderColor: colors.danger },
+  overdueText: { color: colors.danger },
   badgeText: {
     fontSize: 12,
     fontWeight: "600",

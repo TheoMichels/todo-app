@@ -146,7 +146,7 @@ test('création depuis Tous sur mobile', async ({ page }) => {
 });
 
 test('les sections distinctes gardent leurs couleurs sur les tâches et les suivis après réordonnancement', async ({ page }) => {
-  const sections = ['a', 'i', 'q'].map((id, index) => ({ id, name: `Section ${index}`, createdAt: index }));
+  const sections = Array.from({ length: 16 }, (_, index) => ({ id: `section-${index}`, name: `Section ${index}`, createdAt: index }));
   await page.addInitScript((data) => {
     if (localStorage.getItem('@todo_sections_v1')) return;
     localStorage.setItem('@todo_sections_v1', JSON.stringify(data));
@@ -157,8 +157,8 @@ test('les sections distinctes gardent leurs couleurs sur les tâches et les suiv
   await page.getByTestId('view-all').click();
   const badgeColors: string[] = [];
   for (let index = 0; index < sections.length; index++) {
-    const taskBadge = page.locator('[data-testid^="todo-"]').filter({ hasText: `Tâche couleur ${index}` }).getByTestId('section-badge');
-    const trackingBadge = page.locator('[data-testid^="tracking-"]').filter({ hasText: `Suivi couleur ${index}` }).first().getByTestId('section-badge');
+    const taskBadge = page.getByTestId(`todo-todo-${index}`).getByTestId('section-badge');
+    const trackingBadge = page.getByTestId(`tracking-point-${index}`).getByTestId('section-badge');
     await expect(taskBadge).toBeVisible();
     const color = await taskBadge.evaluate((element) => getComputedStyle(element).backgroundColor);
     await expect(trackingBadge).toHaveCSS('background-color', color);
@@ -173,7 +173,28 @@ test('les sections distinctes gardent leurs couleurs sur les tâches et les suiv
   await page.reload();
   await page.getByTestId('view-all').click();
   for (let index = 0; index < sections.length; index++) {
-    await expect(page.locator('[data-testid^="todo-"]').filter({ hasText: `Tâche couleur ${index}` }).getByTestId('section-badge')).toHaveCSS('background-color', badgeColors[index]);
-    await expect(page.locator('[data-testid^="tracking-"]').filter({ hasText: `Suivi couleur ${index}` }).first().getByTestId('section-badge')).toHaveCSS('background-color', badgeColors[index]);
+    await expect(page.getByTestId(`todo-todo-${index}`).getByTestId('section-badge')).toHaveCSS('background-color', badgeColors[index]);
+    await expect(page.getByTestId(`tracking-point-${index}`).getByTestId('section-badge')).toHaveCSS('background-color', badgeColors[index]);
   }
+});
+
+test('les échéances passées sont marquées Dépassé, celles du jour et futures ne le sont pas', async ({ page }) => {
+  const dates = await page.evaluate(() => {
+    const date = (offset: number) => {
+      const value = new Date();
+      value.setDate(value.getDate() + offset);
+      return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    };
+    return [date(-1), date(0), date(1)];
+  });
+  await page.addInitScript((dueDates) => {
+    localStorage.setItem('@todo_sections_v1', JSON.stringify([{ id: 'due-section', name: 'Échéances', createdAt: 0 }]));
+    localStorage.setItem('@todo_trackings_v1', JSON.stringify(dueDates.map((dueDate, index) => ({ id: `due-${index}`, sectionId: 'due-section', title: `Échéance ${index}`, dueDate, status: '', nextStep: '', order: index, createdAt: index }))));
+  }, dates);
+  await page.goto('/');
+  await page.getByTestId('view-all').click();
+  await page.getByText('Points de suivi', { exact: true }).click();
+  await expect(page.getByTestId('tracking-due-date').filter({ hasText: 'Dépassé' })).toHaveCount(1);
+  await expect(page.getByTestId('tracking-due-date').filter({ hasText: dates[1] })).not.toContainText('Dépassé');
+  await expect(page.getByTestId('tracking-due-date').filter({ hasText: dates[2] })).not.toContainText('Dépassé');
 });

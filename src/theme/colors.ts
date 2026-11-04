@@ -86,16 +86,8 @@ export const sectionBadgeColors = [
 // Le tri rend l’attribution indépendante de l’ordre de chargement des sections.
 export function sectionBadgeColorsById(ids: string[]): Record<string, string> {
   const assigned: Record<string, string> = {};
-  const used = new Set<number>();
-  for (const id of [...new Set(ids)].sort()) {
-    let hash = 0;
-    for (const character of id) hash = (Math.imul(hash, 31) + character.charCodeAt(0)) >>> 0;
-    let index = hash % sectionBadgeColors.length;
-    if (used.size < sectionBadgeColors.length) {
-      while (used.has(index)) index = (index + 1) % sectionBadgeColors.length;
-      used.add(index);
-    }
-    assigned[id] = sectionBadgeColors[index];
-  }
+  [...new Set(ids)].sort().forEach((id, index) => {
+    assigned[id] = sectionBadgeColors[index % sectionBadgeColors.length];
+  });
   return assigned;
 }
