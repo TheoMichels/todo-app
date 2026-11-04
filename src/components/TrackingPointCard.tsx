@@ -14,6 +14,9 @@ type Props = {
 };
 
 export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sectionName, sectionColor }: Props) {
+  const today = new Date();
+  const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const isOverdue = !!point.dueDate && point.dueDate < localToday;
   return (
     <View testID={`tracking-${point.id}`} style={[styles.card, isActive && styles.cardActive]}>
       {drag && (
@@ -32,8 +35,8 @@ export function TrackingPointCard({ point, onOpen, onRemove, drag, isActive, sec
         <View style={styles.titleRow}>
           <Text style={styles.title}>{point.title}</Text>
           {!!point.dueDate && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>📅 {point.dueDate}</Text>
+            <View testID="tracking-due-date" style={[styles.badge, isOverdue && styles.overdueBadge]}>
+              <Text style={[styles.badgeText, isOverdue && styles.overdueText]}>{isOverdue ? "Dépassé · " : "📅 "}{point.dueDate}</Text>
             </View>
           )}
         </View>
@@ -120,6 +123,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  overdueBadge: { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
+  overdueText: { color: colors.danger },
   badgeText: {
     fontSize: 12,
     fontWeight: "600",
